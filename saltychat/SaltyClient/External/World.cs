@@ -1,4 +1,17 @@
-﻿using System;
+﻿/*
+License (MIT)
+
+Copyright 2019 Mooshe
+https://github.com/MoosheTV/redm-external
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+*/
+
+using System;
 using System.Threading.Tasks;
 using CitizenFX.Core;
 using CitizenFX.Core.Native;
@@ -92,26 +105,6 @@ namespace RedM.External
             return new Camera(handle);
         }
 
-        public static Prompt CreatePrompt(Control control, string text, int holdDownTime = 0)
-        {
-            var handle = API.PromptRegisterBegin();
-            Function.Call((Hash)0xf4a5c4509bf923b1, handle, 0);
-            var prompt = new Prompt(handle)
-            {
-                Control = control,
-                Text = text,
-                HoldTime = holdDownTime
-            };
-            API.PromptRegisterEnd(handle);
-            return prompt;
-        }
-
-        public static Blip CreateBlip(Vector3 position, BlipType type)
-        {
-            var blip = Function.Call<int>((Hash)0x554d9d53f696d002, type, position.X, position.Y, position.Z);
-            return new Blip(blip);
-        }
-
         public static async Task<Ped> CreatePed(PedHash hash, Vector3 position, float heading = 0f, bool isNet = true, bool isMission = true)
         {
             var model = new Model(hash);
@@ -123,40 +116,6 @@ namespace RedM.External
                 isNet, !isMission, 0, 0);
             Function.Call((Hash)0x283978A15512B2FE, id, true);
             return id == 0 ? null : (Ped)Entity.FromHandle(id);
-        }
-
-        public static async Task<Vehicle> CreateVehicle(VehicleHash hash, Vector3 position, float heading = 0f, bool isNet = true, bool isMission = true)
-        {
-            var model = new Model(hash);
-            if (!await model.Request(4000))
-            {
-                return null;
-            }
-            var id = Function.Call<int>((Hash)0xAF35D0D2583051B0, hash, position.X, position.Y, position.Z, heading,
-                isNet, !isMission);
-            return id == 0 ? null : (Vehicle)Entity.FromHandle(id);
-        }
-
-        public static RaycastResult Raycast(Vector3 source, Vector3 target, IntersectOptions options, Entity ignoreEntity = null)
-        {
-            return new RaycastResult(Function.Call<int>(Hash._START_SHAPE_TEST_RAY, source.X, source.Y, source.Z,
-                target.X, target.Y, target.Z, (int)options, ignoreEntity == null ? 0 : ignoreEntity.Handle, 7));
-        }
-
-        public static RaycastResult Raycast(Vector3 source, Vector3 direction, float maxDist, IntersectOptions options, Entity ignoreEntity = null)
-        {
-            var target = source + direction * maxDist;
-            return new RaycastResult(Function.Call<int>(Hash._START_SHAPE_TEST_RAY, source.X, source.Y, source.Z,
-                target.X, target.Y, target.Z, (int)options, ignoreEntity == null ? 0 : ignoreEntity.Handle, 7));
-        }
-
-        public static RaycastResult CrosshairRaycast(float maxDist, IntersectOptions options, Entity ignoreEntity = null)
-        {
-            var source = GameplayCamera.Position;
-            var rotation = (float)(Math.PI / 180.0) * GameplayCamera.Rotation;
-            var forward = Vector3.Normalize(new Vector3((float)-Math.Sin(rotation.Z) * (float)Math.Abs(Math.Cos(rotation.X)), (float)Math.Cos(rotation.Z) * (float)Math.Abs(Math.Cos(rotation.X)), (float)Math.Sin(rotation.X)));
-            var target = source + forward * maxDist;
-            return Raycast(source, target, options, ignoreEntity);
         }
 
         public static Vector2 World3dToScreen2d(Vector3 pos)

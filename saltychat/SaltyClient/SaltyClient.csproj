@@ -48,17 +48,22 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="External\Camera.cs" />
+    <Compile Include="External\Controls.cs" />
+    <Compile Include="External\Entity.cs" />
+    <Compile Include="External\Game.cs" />
+    <Compile Include="External\Interfaces.cs" />
+    <Compile Include="External\Model.cs" />
+    <Compile Include="External\Ped.cs" />
+    <Compile Include="External\PedHash.cs" />
+    <Compile Include="External\Player.cs" />
+    <Compile Include="External\PlayerList.cs" />
+    <Compile Include="External\World.cs" />
     <Compile Include="Model.cs" />
     <Compile Include="NuiEvent.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Util.cs" />
     <Compile Include="VoiceManager.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\references\external\RedM.External.csproj">
-      <Project>{40bb670f-4117-4dcb-a986-5a5e113b01f8}</Project>
-      <Name>RedM.External</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="..\SaltyShared\SaltyShared.projitems" Label="Shared" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

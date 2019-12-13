@@ -1,4 +1,17 @@
-﻿using System;
+﻿/*
+License (MIT)
+
+Copyright 2019 Mooshe
+https://github.com/MoosheTV/redm-external
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+*/
+
+using System;
 using CitizenFX.Core;
 using CitizenFX.Core.Native;
 
@@ -30,29 +43,7 @@ namespace RedM.External
         }
         public bool IsInterpolating => Function.Call<bool>(Hash.IS_CAM_INTERPOLATING, Handle);
 
-        // TODO: Find Camera Matrices in memory and re-implement in extra-natives-rdr3
-        /*public Matrix Matrix
-		{
-			get {
-				Vector3 rightVector = new Vector3();
-				Vector3 forwardVector = new Vector3();
-				Vector3 upVector = new Vector3();
-				Vector3 position = new Vector3();
-
-				API.GetCamMatrix( Handle, ref rightVector, ref forwardVector, ref upVector, ref position );
-
-				return new Matrix(
-					rightVector.X, rightVector.Y, rightVector.Z, 0.0f,
-					forwardVector.X, forwardVector.Y, forwardVector.Z, 0.0f,
-					upVector.X, upVector.Y, upVector.Z, 0.0f,
-					position.X, position.Y, position.Z, 1.0f
-				);
-			}
-		}*/
-
         public Vector3 ForwardVector => GameMath.RotationToDirection(Rotation);
-        //public Vector3 UpVector => Matrix.Up;
-        //public Vector3 RightVector => Matrix.Right;
 
         public Vector3 Direction
         {
@@ -86,13 +77,6 @@ namespace RedM.External
         {
             Function.Call(Hash.SET_CAM_ACTIVE_WITH_INTERP, to.Handle, Handle, duration, easePosition ? 1 : 0, easeRotation ? 1 : 0);
         }
-        /*public Vector3 GetOffsetPosition( Vector3 offset ) {
-			return Vector3.TransformCoordinate( offset, Matrix );
-		}
-
-		public Vector3 GetPositionOffset( Vector3 worldCoords ) {
-			return Vector3.TransformCoordinate( worldCoords, Matrix.Invert( Matrix ) );
-		}*/
 
         public override bool Exists()
         {

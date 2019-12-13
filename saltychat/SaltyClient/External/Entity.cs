@@ -1,4 +1,17 @@
-﻿using System;
+﻿/*
+License (MIT)
+
+Copyright 2019 Mooshe
+https://github.com/MoosheTV/redm-external
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+*/
+
+using System;
 using System.Security;
 using CitizenFX.Core;
 using CitizenFX.Core.Native;
@@ -13,22 +26,20 @@ namespace RedM.External
 
         public int Health
         {
-            get => Function.Call<int>(Hash.GET_ENTITY_HEALTH, Handle) - 100;
+            get => API.GetEntityHealth(Handle);
         }
 
         public int MaxHealth
         {
             get => Function.Call<int>(Hash.GET_ENTITY_MAX_HEALTH, Handle) - 100;
-            set => Function.Call(Hash.SET_ENTITY_MAX_HEALTH, Handle, value + 100);
+            set => API.SetEntityMaxHealth(Handle, value + 100);
         }
 
-        public bool IsDead => Function.Call<bool>(Hash.IS_ENTITY_DEAD, Handle);
+        public bool IsDead => API.IsEntityDead(Handle);
 
         public bool IsAlive => !IsDead;
 
         public Model Model => new Model(Function.Call<int>(Hash.GET_ENTITY_MODEL, Handle));
-
-        public Blip Blip => new Blip(API.GetBlipFromEntity(Handle));
 
         public virtual Vector3 Position
         {
@@ -114,64 +125,11 @@ namespace RedM.External
         public bool IsPersistent
         {
             get => Function.Call<bool>(Hash.IS_ENTITY_A_MISSION_ENTITY, Handle);
-            set {
-                if (value)
-                {
-                    Function.Call(Hash.SET_ENTITY_AS_MISSION_ENTITY, Handle, true);
-                }
-                else
-                {
-                    MarkAsNoLongerNeeded();
-                }
-            }
-        }
-
-        public int Opacity
-        {
-            get => Function.Call<int>(Hash.GET_ENTITY_ALPHA, Handle);
-            set {
-                if (value < 0 || value > 255)
-                {
-                    ResetOpacity();
-                }
-                else
-                {
-                    Function.Call(Hash.SET_ENTITY_ALPHA, Handle, value);
-                }
-            }
-        }
-
-        public bool HasCollided => Function.Call<bool>(Hash.HAS_ENTITY_COLLIDED_WITH_ANYTHING, Handle);
-
-        public bool IsCollisionEnabled
-        {
-            get => Function.Call<bool>(Hash.GET_ENTITY_COLLISION_DISABLED, Handle);
-            set => Function.Call(Hash.SET_ENTITY_COLLISION, Handle, value, false);
-        }
-
-        public bool PreRender
-        {
-            set => Function.Call(Hash.SET_ENTITY_ALWAYS_PRERENDER, Handle, value);
-        }
-
-        public float MotionBlur
-        {
-            set => Function.Call(Hash.SET_ENTITY_MOTION_BLUR, Handle, value);
         }
 
         public float Speed => Function.Call<float>(Hash.GET_ENTITY_SPEED, Handle);
 
         public Vector3 SpeedVector => Function.Call<Vector3>(Hash.GET_ENTITY_SPEED_VECTOR, Handle);
-
-        public void SetNoCollision(Entity entity, bool toggle)
-        {
-            Function.Call(Hash.SET_ENTITY_NO_COLLISION_ENTITY, Handle, entity.Handle, toggle);
-        }
-
-        public bool HasBeenDamagedBy(Entity entity)
-        {
-            return Function.Call<bool>(Hash.HAS_ENTITY_BEEN_DAMAGED_BY_ENTITY, Handle, entity.Handle, true);
-        }
 
         public Vector3 GetOffsetPosition(Vector3 relativeCoords)
         {
@@ -183,62 +141,6 @@ namespace RedM.External
         {
             return Function.Call<Vector3>(Hash.GET_OFFSET_FROM_ENTITY_GIVEN_WORLD_COORDS, Handle, worldCoords.X,
                 worldCoords.Y, worldCoords.Z);
-        }
-
-        public void SetPosition(Vector3 pos, float heading)
-        {
-            Function.Call((Hash)0x203BEFFDBE12E96A, Handle, pos.X, pos.Y, pos.Z, heading % 360f, true, true);
-        }
-
-        public void SetPosition(Vector4 pos)
-        {
-            SetPosition(new Vector3(pos.X, pos.Y, pos.Z), pos.W);
-        }
-
-        public void AttachTo(Entity entity, Vector3 offset = default, Vector3 rotOffset = default)
-        {
-            Function.Call(Hash.ATTACH_ENTITY_TO_ENTITY, Handle, entity.Handle, -1, offset.X, offset.Y, offset.Z,
-                rotOffset.X, rotOffset.Y, rotOffset.Z, false, false, false, false, 2, true);
-        }
-
-        public void Detach()
-        {
-            Function.Call(Hash.DETACH_ENTITY, Handle, true, true);
-        }
-
-        public bool IsAttached()
-        {
-            return Function.Call<bool>(Hash.IS_ENTITY_ATTACHED, Handle);
-        }
-
-        public bool IsAttachedTo(Entity entity)
-        {
-            return Function.Call<bool>(Hash.IS_ENTITY_ATTACHED_TO_ENTITY, Handle, entity.Handle);
-        }
-
-        public Entity GetEntityAttachedTo()
-        {
-            return FromHandle(Function.Call<int>(Hash.GET_ENTITY_ATTACHED_TO, Handle));
-        }
-
-        public void ResetOpacity()
-        {
-            Function.Call(Hash.RESET_ENTITY_ALPHA, Handle);
-        }
-
-        [SecuritySafeCritical]
-        public void MarkAsNoLongerNeeded()
-        {
-            _MarkAsNoLongerNeeded();
-        }
-
-        [SecuritySafeCritical]
-        private void _MarkAsNoLongerNeeded()
-        {
-            Function.Call(Hash.SET_ENTITY_AS_NO_LONGER_NEEDED, Handle, false, true);
-            var handle = new OutputArgument(Handle);
-            Function.Call(Hash.SET_ENTITY_AS_NO_LONGER_NEEDED, handle);
-            Handle = handle.GetResult<int>();
         }
 
         public override bool Exists()
@@ -262,10 +164,6 @@ namespace RedM.External
             {
                 case EntityType.Ped:
                     return new Ped(handle);
-                case EntityType.Vehicle:
-                    return new Vehicle(handle);
-                case EntityType.Object:
-                    return new Prop(handle);
                 default:
                     return null;
             }
