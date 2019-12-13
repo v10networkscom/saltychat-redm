@@ -1,0 +1,7 @@
+language: csharp
+
+solution: saltychat/SaltyChat.sln
+
+branches:
+  only:
+    - master
