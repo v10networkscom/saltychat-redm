@@ -360,8 +360,6 @@ namespace SaltyClient
             {
                 VoiceManager.IsTalking = pluginState.IsTalking;
                 hasTalkingChanged = true;
-
-                API.SetPlayerTalkingOverride(Game.Player.ServerId, VoiceManager.IsTalking);
             }
 
             if (pluginState.IsMicrophoneMuted != VoiceManager.IsMicrophoneMuted)
