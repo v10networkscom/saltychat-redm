@@ -23,20 +23,6 @@ namespace RedM.External
         {
 
         }
-
-        public Gender Gender => Function.Call<bool>(Hash.IS_PED_MALE, Handle) ? Gender.Male : Gender.Female;
-        public bool IsJumping => Function.Call<bool>(Hash.IS_PED_JUMPING, Handle);
-        public bool IsInMeleeCombat => Function.Call<bool>(Hash.IS_PED_IN_MELEE_COMBAT, Handle);
-        public bool IsInCombat => Function.Call<bool>(Hash.IS_PED_IN_COMBAT, Handle);
-        public bool IsClimbing => Function.Call<bool>(Hash.IS_PED_CLIMBING, Handle);
-        public bool IsPlayer => Function.Call<bool>(Hash.IS_PED_A_PLAYER, Handle);
-        public bool IsHuman => Function.Call<bool>(Hash.IS_PED_HUMAN, Handle);
-        public bool IsFleeing => Function.Call<bool>(Hash.IS_PED_FLEEING, Handle);
-        public bool IsGettingUp => Function.Call<bool>(Hash.IS_PED_GETTING_UP, Handle);
-        public bool IsGettingIntoVehicle => Function.Call<bool>(Hash.IS_PED_GETTING_INTO_A_VEHICLE, Handle);
-        public bool IsInVehicle => Function.Call<bool>(Hash.IS_PED_IN_VEHICLE, Handle);
-        public bool IsOnFoot => Function.Call<bool>(Hash.IS_PED_ON_FOOT, Handle);
-        public bool IsOnMount => Function.Call<bool>(Hash.IS_PED_ON_MOUNT, Handle);
     }
 
     public enum Gender

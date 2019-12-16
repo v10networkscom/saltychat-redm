@@ -33,119 +33,104 @@ namespace RedM.External
 
         public static Ped PlayerPed => Player.Character;
 
-        public static int PlayerMoney
+		public static bool IsControlPressed(int index, Control control)
+		{
+			return API.IsDisabledControlPressed(index, (uint)control);
+		}
+
+		public static bool IsControlJustPressed(int index, Control control)
+		{
+			return API.IsDisabledControlJustPressed(index, (uint)control);
+		}
+
+		public static bool IsControlJustReleased(int index, Control control)
+		{
+			return API.IsDisabledControlJustReleased(index, (uint)control);
+		}
+
+		public static bool IsEnabledControlPressed(int index, Control control)
+		{
+			return API.IsControlPressed(index, (uint)control);
+		}
+
+		public static bool IsEnabledControlJustPressed(int index, Control control)
+		{
+			return API.IsControlJustPressed(index, (uint)control);
+		}
+
+		public static bool IsEnabledControlJustReleased(int index, Control control)
+		{
+			return API.IsControlJustReleased(index, (uint)control);
+		}
+
+		public static bool IsDisabledControlPressed(int index, Control control)
+		{
+			return IsControlPressed(index, control) && !IsControlEnabled(index, control);
+		}
+
+		public static bool IsDisabledControlJustPressed(int index, Control control)
+		{
+			return IsControlJustPressed(index, control) && !IsControlEnabled(index, control);
+		}
+
+		public static bool IsDisabledControlJustReleased(int index, Control control)
+		{
+			return IsControlJustReleased(index, control) && !IsControlEnabled(index, control);
+		}
+
+		public static bool IsControlEnabled(int index, Control control)
+		{
+			return API.IsControlEnabled(index, (uint)control);
+		}
+
+		public static void EnableControlThisFrame(int index, Control control)
+		{
+			API.EnableControlAction(index, (uint)control, true);
+		}
+
+		public static void DisableControlThisFrame(int index, Control control)
+		{
+			API.DisableControlAction(index, (uint)control, true);
+		}
+
+		public static void DisableAllControlsThisFrame(int index)
+		{
+			API.DisableAllControlActions(index);
+		}
+
+		public static float GetControlNormal(int index, Control control)
+		{
+			return API.GetControlNormal(index, (uint)control);
+		}
+
+		public static float GetDisabledControlNormal(int index, Control control)
+		{
+			return API.GetDisabledControlNormal(index, (uint)control);
+		}
+
+		public static int GetControlValue(int index, Control control)
+		{
+			return API.GetControlValue(index, (uint)control);
+		}
+
+		public static void SetControlNormal(int index, Control control, float value)
+		{
+			API.SetControlNormal(index, (uint)control, value);
+		}
+
+		public static void Pause(bool value)
         {
-            get => Function.Call<int>((Hash)0x0C02DABFA3B98176);
-            set {
-                var source = PlayerMoney;
-                var target = value;
-                if (target < source)
-                {
-                    Function.Call((Hash)0x466BC8769CF26A7A, source - target);
-                }
-                else
-                {
-                    Function.Call((Hash)0xBC3422DC91667621, target - source);
-                }
-            }
+			API.SetGamePaused(value);
         }
 
-        public static bool IsPauseMenuActive => Function.Call<bool>(Hash.IS_PAUSE_MENU_ACTIVE);
-
-
-        public static bool IsCinematicModeEnabled
+		public static bool DoesGXTEntryExist(string entry)
         {
-            set => Function.Call(Hash.SET_CINEMATIC_BUTTON_ACTIVE, value);
-        }
-
-        public static bool IsCinematicModeActive
-        {
-            set => Function.Call(Hash.SET_CINEMATIC_MODE_ACTIVE, value);
-        }
-
-        public static int GenerateHash(string name)
-        {
-            return Function.Call<int>(Hash.GET_HASH_KEY, name);
-        }
-
-        public static bool IsControlPressed(int index, Control control)
-        {
-            return Function.Call<bool>(Hash.IS_DISABLED_CONTROL_PRESSED, index, (uint)control);
-        }
-
-        public static bool IsControlJustPressed(int index, Control control)
-        {
-            return Function.Call<bool>(Hash.IS_DISABLED_CONTROL_JUST_PRESSED, index, (uint)control);
-        }
-
-        public static bool IsControlJustReleased(int index, Control control)
-        {
-            return Function.Call<bool>(Hash.IS_DISABLED_CONTROL_JUST_RELEASED, index, (uint)control);
-        }
-
-        public static bool IsEnabledControlPressed(int index, Control control)
-        {
-            return Function.Call<bool>(Hash.IS_CONTROL_PRESSED, index, (uint)control);
-        }
-
-        public static bool IsEnabledControlJustPressed(int index, Control control)
-        {
-            return Function.Call<bool>(Hash.IS_CONTROL_JUST_PRESSED, index, (uint)control);
-        }
-
-        public static bool IsEnabledControlReleased(int index, Control control)
-        {
-            return !IsPauseMenuActive && Function.Call<bool>(Hash.IS_CONTROL_RELEASED, index, (uint)control);
-        }
-
-        public static bool IsEnabledControlJustReleased(int index, Control control)
-        {
-            return Function.Call<bool>(Hash.IS_CONTROL_JUST_RELEASED, index, (uint)control);
-        }
-
-        public static bool IsControlEnabled(int index, Control control)
-        {
-            return Function.Call<bool>(Hash.IS_CONTROL_ENABLED, index, (uint)control);
-        }
-
-        public static float GetControlNormal(int index, Control control)
-        {
-            return Function.Call<float>(Hash.GET_CONTROL_NORMAL, index, (uint)control);
-        }
-
-        public static void SetControlNormal(int index, Control control, float value)
-        {
-            Function.Call(Hash._SET_CONTROL_NORMAL, index, (uint)control, value);
-        }
-
-        public static void DisableControlThisFrame(int index, Control control)
-        {
-            Function.Call(Hash.DISABLE_CONTROL_ACTION, index, control, true);
-        }
-
-        public static float GetDisabledControlNormal(int index, Control control)
-        {
-            return Function.Call<float>(Hash.GET_DISABLED_CONTROL_NORMAL, index, (uint)control);
-        }
-
-        public static void Pause(bool value)
-        {
-            Function.Call(Hash.SET_GAME_PAUSED, value);
-        }
-
-        public static void PauseClock(bool value)
-        {
-            Function.Call(Hash.PAUSE_CLOCK, value);
-        }
-
-        public static bool DoesGXTEntryExist(string entry)
-        {
-            return Function.Call<bool>(Hash.DOES_TEXT_LABEL_EXIST, entry);
+			return API.DoesTextLabelExist(entry);
         }
 
         public static string GetGXTEntry(string entry)
         {
-            return DoesGXTEntryExist(entry) ? Function.Call<string>(Hash._GET_LABEL_TEXT, entry) : string.Empty;
+			return DoesGXTEntryExist(entry) ? API.GetLabelText(entry) : string.Empty;
         }
     }
 }

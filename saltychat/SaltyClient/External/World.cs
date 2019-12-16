@@ -20,36 +20,11 @@ namespace RedM.External
 {
     public static class World
     {
-
-        private static WeatherType _currentWeather;
-        public static WeatherType CurrentWeather
-        {
-            get => GetCurrentWeatherType();
-            set {
-                _currentWeather = value;
-                Function.Call(Hash._SET_WEATHER_TYPE_TRANSITION, GetCurrentWeatherType(), value, 1f);
-            }
-        }
-
-        private static WeatherType _nextWeather;
-        public static WeatherType NextWeather
-        {
-            get {
-                GetCurrentWeatherType();
-                return _nextWeather;
-            }
-        }
-
         public static int CurrentDay => API.GetClockDayOfMonth();
 
         public static int CurrentMonth => API.GetClockMonth();
 
         public static int CurrentYear => API.GetClockYear();
-
-        public static bool IsWaypointActive => Function.Call<bool>((Hash)0x202B1BBFC6AB5EE4);
-
-        public static Vector3 WaypointPosition => Function.Call<Vector3>((Hash)0x29B30D07C3F7873B);
-
 
         public static TimeSpan CurrentTime
         {
@@ -62,67 +37,14 @@ namespace RedM.External
             API.SetClockDate(day, month, year);
         }
 
-        private static WeatherType GetCurrentWeatherType()
-        {
-            var currentWeather = new OutputArgument();
-            var nextWeather = new OutputArgument();
-            var percent = new OutputArgument();
-            Function.Call(Hash._GET_WEATHER_TYPE_TRANSITION, currentWeather, nextWeather, percent);
-            _currentWeather = currentWeather.GetResult<WeatherType>();
-            _nextWeather = nextWeather.GetResult<WeatherType>();
-            var pct = percent.GetResult<float>();
-            if (pct >= 0.5f)
-            {
-                return _nextWeather;
-            }
-            return _currentWeather;
-        }
-
-        public static Camera RenderingCamera
-        {
-            get => new Camera(API.GetRenderingCam());
-            set {
-                if (value == null)
-                {
-                    Function.Call(Hash.RENDER_SCRIPT_CAMS, false, false, 3000, true, false);
-                }
-                else
-                {
-                    value.IsActive = true;
-                    Function.Call(Hash.RENDER_SCRIPT_CAMS, true, false, 3000, true, false);
-                }
-            }
-        }
-
-        public static Camera CreateCamera(Vector3 pos, Vector3 rot, float fov = -1f)
-        {
-            if (fov <= 0f)
-            {
-                fov = Function.Call<float>(Hash.GET_GAMEPLAY_CAM_FOV);
-            }
-            var handle = Function.Call<int>(Hash.CREATE_CAM_WITH_PARAMS, "DEFAULT_SCRIPTED_CAMERA", pos.X, pos.Y,
-                pos.Z, rot.X, rot.Y, rot.Z, fov, true, 2);
-            return new Camera(handle);
-        }
-
-        public static async Task<Ped> CreatePed(PedHash hash, Vector3 position, float heading = 0f, bool isNet = true, bool isMission = true)
-        {
-            var model = new Model(hash);
-            if (!await model.Request(4000))
-            {
-                return null;
-            }
-            var id = Function.Call<int>((Hash)0xD49F9B0955C367DE, hash, position.X, position.Y, position.Z, heading,
-                isNet, !isMission, 0, 0);
-            Function.Call((Hash)0x283978A15512B2FE, id, true);
-            return id == 0 ? null : (Ped)Entity.FromHandle(id);
-        }
-
         public static Vector2 World3dToScreen2d(Vector3 pos)
         {
-            OutputArgument outX = new OutputArgument(), outY = new OutputArgument();
-            return Function.Call<bool>(Hash.GET_SCREEN_COORD_FROM_WORLD_COORD, pos.X, pos.Y, pos.Z, outX, outY) ?
-                new Vector2(outX.GetResult<float>(), outY.GetResult<float>()) : Vector2.Zero;
+            float screenX = 0f;
+            float screenY = 0f;
+
+            API.GetScreenCoordFromWorldCoord(pos.X, pos.Y, pos.Z, ref screenX, ref screenY);
+
+            return new Vector2(screenX, screenY);
         }
     }
 

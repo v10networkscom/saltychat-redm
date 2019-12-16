@@ -30,7 +30,7 @@ namespace RedM.External
 
         public bool Exists()
         {
-            return Function.Call<bool>(Hash.NETWORK_IS_PLAYER_ACTIVE, Handle);
+            return API.NetworkIsPlayerActive(Handle);
         }
 
         public Ped Character
@@ -45,25 +45,8 @@ namespace RedM.External
             }
         }
 
-        public string Name => Function.Call<string>(Hash.GET_PLAYER_NAME, Handle);
-        public int ServerId => Function.Call<int>(Hash.GET_PLAYER_SERVER_ID, Handle);
-
-        public async Task<bool> ChangeModel(PedHash hash, int timeout = 3000)
-        {
-            var model = new Model(hash);
-
-            await model.Request(timeout);
-
-            if (!model.IsLoaded)
-            {
-                return false;
-            }
-
-            Function.Call(Hash.SET_PLAYER_MODEL, Handle, hash, false);
-            Function.Call((Hash)0x283978A15512B2FE, Character.Handle, true);
-            model.MarkAsNoLongerNeeded();
-            return true;
-        }
+        public string Name => API.GetPlayerName(Handle);
+        public int ServerId => API.GetPlayerServerId(Handle);
 
         /// <summary>
 		/// Gets a value indicating whether this <see cref="Player"/> is alive.

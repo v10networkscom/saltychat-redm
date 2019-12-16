@@ -48,7 +48,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="External\Camera.cs" />
     <Compile Include="External\Controls.cs" />
     <Compile Include="External\Entity.cs" />
     <Compile Include="External\Game.cs" />
