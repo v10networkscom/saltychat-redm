@@ -49,16 +49,16 @@ namespace SaltyServer
             if (resourceName != API.GetCurrentResourceName())
                 return;
 
-            VoiceManager.Enabled = API.GetConvar("VoiceEnabled", "false").Equals("true", StringComparison.OrdinalIgnoreCase);
+            VoiceManager.Enabled = API.GetResourceMetadata(resourceName, "VoiceEnabled", 0).Equals("true", StringComparison.OrdinalIgnoreCase);
 
             if (VoiceManager.Enabled)
             {
-                VoiceManager.ServerUniqueIdentifier = API.GetConvar("ServerUniqueIdentifier", String.Empty);
-                VoiceManager.RequiredUpdateBranch = API.GetConvar("RequiredUpdateBranch", String.Empty);
-                VoiceManager.MinimumPluginVersion = API.GetConvar("MinimumPluginVersion", String.Empty);
-                VoiceManager.SoundPack = API.GetConvar("SoundPack", String.Empty);
-                VoiceManager.IngameChannel = API.GetConvar("IngameChannel", String.Empty);
-                VoiceManager.IngameChannelPassword = API.GetConvar("IngameChannelPassword", String.Empty);
+                VoiceManager.ServerUniqueIdentifier = API.GetResourceMetadata(resourceName, "ServerUniqueIdentifier", 0);
+                VoiceManager.RequiredUpdateBranch = API.GetResourceMetadata(resourceName, "RequiredUpdateBranch", 0);
+                VoiceManager.MinimumPluginVersion = API.GetResourceMetadata(resourceName, "MinimumPluginVersion", 0);
+                VoiceManager.SoundPack = API.GetResourceMetadata(resourceName, "SoundPack", 0);
+                VoiceManager.IngameChannel = API.GetResourceMetadata(resourceName, "IngameChannelId", 0);
+                VoiceManager.IngameChannelPassword = API.GetResourceMetadata(resourceName, "IngameChannelPassword", 0);
             }
         }
 

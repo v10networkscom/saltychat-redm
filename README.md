@@ -10,20 +10,15 @@ Join our [Discord](https://discord.gg/MBCnqSf) and start with [Salty Chat](https
 
 # Setup Steps
 1. Copy the folder `saltychat` into your resources
-2. Add the following into your `server.cfg` and edit it accordingly
+2. Build the solution (`saltychat\SaltyChat-RedM.sln`) with Visual Studio 2019, so the `*.net.dll` files get build
+3. Add `start saltychat` into your `server.cfg`
+4. Open `fxmanifest.lua` and adjust the variables
 ```
-## Define variables before starting the resource
-set VoiceEnabled "true"
-set ServerUniqueIdentifier "NMjxHW5psWaLNmFh0+kjnQik7Qc="
-set RequiredUpdateBranch ""
-set MinimumPluginVersion ""
-set SoundPack "default"
-set IngameChannel "25"
-set IngameChannelPassword "5V88FWWXME615"
-
-start saltychat
+VoiceEnabled "true"
+ServerUniqueIdentifier "NMjxHW5psWaLNmFh0+kjnQik7Qc="
+RequiredUpdateBranch ""
+MinimumPluginVersion ""
+SoundPack "default"
+IngameChannelId "25"
+IngameChannelPassword "5V88FWWME615"
 ```
-3. Build the project so the `*.net.dll` files get build
-
-# Dependencies
-- [redm-external](https://github.com/MoosheTV/redm-external) by MoosheTV
