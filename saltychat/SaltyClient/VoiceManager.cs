@@ -120,10 +120,7 @@ namespace SaltyClient
                 }
                 else
                 {
-                    // ToDo
-                    //VoiceManager._voiceClients.Add(serverId, new VoiceClient(this.Players[serverId], teamSpeakName, voiceRange));
-
-                    VoiceManager._voiceClients.Add(serverId, new VoiceClient(VoiceManager.PlayerList[serverId], teamSpeakName, voiceRange));
+                    VoiceManager._voiceClients.Add(serverId, new VoiceClient(serverId, VoiceManager.PlayerList[serverId], teamSpeakName, voiceRange));
                 }
             }
         }
@@ -422,12 +419,18 @@ namespace SaltyClient
 
                 foreach (VoiceClient client in VoiceManager.VoiceClients)
                 {
+                    if (client.Player == null)
+                    {
+                        client.Player = VoiceManager.PlayerList[client.ServerId];
+
+                        if (client.Player == null)
+                            continue;
+                    }
+
                     Ped ped = client.Player.Character;
 
                     if (!ped.Exists())
                         continue;
-
-                    Vector3 nPlayerPosition = ped.Position;
 
                     this.ExecuteCommand(
                         new PluginCommand(

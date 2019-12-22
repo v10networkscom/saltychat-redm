@@ -30,12 +30,11 @@ namespace RedM.External
 
         public IEnumerator<Player> GetEnumerator()
         {
-            for (var i = 0; i < MaxPlayers; i++)
+            List<dynamic> players = API.GetActivePlayers();
+
+            foreach (int i in players)
             {
-                if (API.NetworkIsPlayerConnected(i))
-                {
-                    yield return new Player(i);
-                }
+                yield return new Player(i);
             }
         }
 

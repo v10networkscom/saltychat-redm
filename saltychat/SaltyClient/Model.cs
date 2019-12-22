@@ -549,12 +549,14 @@ namespace SaltyClient
     #region VoiceClient
     public class VoiceClient
     {
+        public int ServerId { get; }
         public RedM.External.Player Player { get; set; }
         public string TeamSpeakName { get; set; }
         public float VoiceRange { get; set; }
 
-        public VoiceClient(RedM.External.Player player, string teamSpeakName, float voiceRange)
+        public VoiceClient(int serverId, RedM.External.Player player, string teamSpeakName, float voiceRange)
         {
+            this.ServerId = serverId;
             this.Player = player;
             this.TeamSpeakName = teamSpeakName;
             this.VoiceRange = voiceRange;
