@@ -31,19 +31,19 @@ namespace SaltyServer
             return this.Members.Any(m => m.VoiceClient == voiceClient);
         }
 
-        internal void AddMember(VoiceClient voiceClient)
+        internal void AddMember(VoiceClient voiceClient, bool isPrimary)
         {
             lock (this._members)
             {
                 if (!this._members.Any(m => m.VoiceClient == voiceClient))
                 {
-                    this._members.Add(new RadioChannelMember(this, voiceClient));
+                    this._members.Add(new RadioChannelMember(this, voiceClient, isPrimary));
 
-                    voiceClient.Player.TriggerEvent(Event.SaltyChat_SetRadioChannel, this.Name);
+                    voiceClient.Player.TriggerEvent(Event.SaltyChat_SetRadioChannel, this.Name, isPrimary);
 
                     foreach (RadioChannelMember member in this._members.Where(m => m.IsSending))
                     {
-                        voiceClient.Player.TriggerEvent(Event.SaltyChat_IsSending, member.VoiceClient.Player.Handle, true);
+                        voiceClient.Player.TriggerEvent(Event.SaltyChat_IsSending, member.VoiceClient.Player.Handle, this.Name, true, false);
                     }
                 }
             }
@@ -63,25 +63,26 @@ namespace SaltyServer
                         {
                             foreach (VoiceClient client in VoiceManager.VoiceClients)
                             {
-                                client.Player.TriggerEvent(Event.SaltyChat_IsSendingRelayed, voiceClient.Player.Handle, false, true, false, new string[0]);
+                                client.Player.TriggerEvent(Event.SaltyChat_IsSendingRelayed, voiceClient.Player.Handle, this.Name, false, true, false, new string[0]);
                             }
                         }
                         else
                         {
                             foreach (RadioChannelMember channelMember in this._members)
                             {
-                                channelMember.VoiceClient.Player.TriggerEvent(Event.SaltyChat_IsSending, voiceClient.Player.Handle, false);
+                                channelMember.VoiceClient.Player.TriggerEvent(Event.SaltyChat_IsSending, voiceClient.Player.Handle, this.Name, false, true);
                             }
                         }
                     }
 
                     this._members.Remove(member);
-                    voiceClient.Player.TriggerEvent(Event.SaltyChat_SetRadioChannel, null);
 
                     foreach (RadioChannelMember channelMember in this._members.Where(m => m.IsSending))
                     {
-                        voiceClient.Player.TriggerEvent(Event.SaltyChat_IsSending, channelMember.VoiceClient.Player.Handle, false);
+                        voiceClient.Player.TriggerEvent(Event.SaltyChat_IsSending, channelMember.VoiceClient.Player.Handle, this.Name, false, false);
                     }
+
+                    voiceClient.Player.TriggerEvent(Event.SaltyChat_SetRadioChannel, null, member.IsPrimary);
                 }
             }
         }
@@ -103,14 +104,14 @@ namespace SaltyServer
 
                 foreach (VoiceClient remoteClient in VoiceManager.VoiceClients)
                 {
-                    remoteClient.Player.TriggerEvent(Event.SaltyChat_IsSendingRelayed, voiceClient.Player.Handle, isSending, stateChanged, this.IsMember(remoteClient), channelMemberNames);
+                    remoteClient.Player.TriggerEvent(Event.SaltyChat_IsSendingRelayed, voiceClient.Player.Handle, this.Name, isSending, stateChanged, this.IsMember(remoteClient), channelMemberNames);
                 }
             }
             else
             {
                 foreach (RadioChannelMember member in channelMembers)
                 {
-                    member.VoiceClient.Player.TriggerEvent(Event.SaltyChat_IsSending, voiceClient.Player.Handle, isSending, stateChanged);
+                    member.VoiceClient.Player.TriggerEvent(Event.SaltyChat_IsSending, voiceClient.Player.Handle, this.Name, isSending, stateChanged);
                 }
             }
         }
@@ -130,12 +131,14 @@ namespace SaltyServer
     {
         internal RadioChannel RadioChannel { get; }
         internal VoiceClient VoiceClient { get; }
+        internal bool IsPrimary { get; }
         internal bool IsSending { get; set; }
 
-        internal RadioChannelMember(RadioChannel radioChannel, VoiceClient voiceClient)
+        internal RadioChannelMember(RadioChannel radioChannel, VoiceClient voiceClient, bool isPrimary)
         {
             this.RadioChannel = radioChannel;
             this.VoiceClient = voiceClient;
+            this.IsPrimary = isPrimary;
         }
     }
 }

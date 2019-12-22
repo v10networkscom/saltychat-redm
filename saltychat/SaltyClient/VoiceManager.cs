@@ -26,8 +26,9 @@ namespace SaltyClient
         public static VoiceClient[] VoiceClients => VoiceManager._voiceClients.Values.ToArray();
         private static Dictionary<int, VoiceClient> _voiceClients = new Dictionary<int, VoiceClient>();
 
-        private static float _voiceRange = SharedData.VoiceRanges[1];
-        private static string _radioChannel;
+        public static float VoiceRange { get; private set; } = SharedData.VoiceRanges[1];
+        public static string PrimaryRadioChannel;
+        public static string SecondaryRadioChannel;
 
         public static PlayerList PlayerList { get; } = new PlayerList();
 
@@ -70,7 +71,7 @@ namespace SaltyClient
                 VoiceManager._voiceClients.Clear();
             }
 
-            VoiceManager._radioChannel = null;
+            VoiceManager.PrimaryRadioChannel = null;
         }
         #endregion
 
@@ -98,7 +99,7 @@ namespace SaltyClient
             else
                 this.ExecuteCommand("connect", "127.0.0.1:8088");
 
-            //Voice.DisplayDebug(true);
+            //VoiceManager.DisplayDebug(true);
         }
 
         [EventHandler(Event.SaltyChat_UpdateClient)]
@@ -154,8 +155,8 @@ namespace SaltyClient
 
             if (VoiceManager._voiceClients.TryGetValue(serverId, out VoiceClient client))
             {
-                Vector3 playerPosition = Game.PlayerPed.Position;
-                Vector3 remotePlayerPosition = client.Player.Character.Position;
+                //Vector3 playerPosition = Game.PlayerPed.Position;
+                //Vector3 remotePlayerPosition = client.Player.Character.Position;
 
                 // ToDo: Find alternative - Natives not available in RDR3
                 //int signalDistortion = API.GetZoneScumminess(API.GetZoneAtCoords(playerPosition.X, playerPosition.Y, playerPosition.Z));
@@ -199,13 +200,36 @@ namespace SaltyClient
 
         #region Remote Events (Radio)
         [EventHandler(Event.SaltyChat_SetRadioChannel)]
-        private void OnSetRadioChannel(string radioChannel)
+        private void OnSetRadioChannel(string radioChannel, bool isPrimary)
         {
-            VoiceManager._radioChannel = radioChannel;
+            if (isPrimary)
+            {
+                VoiceManager.PrimaryRadioChannel = radioChannel;
+
+                if (String.IsNullOrEmpty(radioChannel))
+                    this.PlaySound("leaveRadioChannel", false, "radio");
+                else
+                    this.PlaySound("enterRadioChannel", false, "radio");
+            }
+            else
+            {
+                VoiceManager.SecondaryRadioChannel = radioChannel;
+
+                if (String.IsNullOrEmpty(radioChannel))
+                    this.PlaySound("leaveRadioChannel", false, "radio");
+                else
+                    this.PlaySound("enterRadioChannel", false, "radio");
+            }
         }
 
         [EventHandler(Event.SaltyChat_IsSending)]
-        private void OnPlayerIsSending(string handle, bool isSending, bool stateChange)
+        private void OnPlayerIsSending(string handle, string radioChannel, bool isSending, bool stateChange)
+        {
+            this.OnPlayerIsSendingRelayed(handle, radioChannel, isSending, stateChange, true, new List<dynamic>());
+        }
+
+        [EventHandler(Event.SaltyChat_IsSendingRelayed)]
+        private void OnPlayerIsSendingRelayed(string handle, string radioChannel, bool isSending, bool stateChange, bool direct, List<dynamic> relays)
         {
             if (!Int32.TryParse(handle, out int serverId))
                 return;
@@ -226,50 +250,9 @@ namespace SaltyClient
                                 client.TeamSpeakName,
                                 RadioType.LongRange,
                                 RadioType.LongRange,
-                                stateChange
-                            )
-                        )
-                    );
-                }
-                else
-                {
-                    this.ExecuteCommand(
-                        new PluginCommand(
-                            Command.RadioCommunicationUpdate,
-                            VoiceManager._serverUniqueIdentifier,
-                            new RadioCommunication(
-                                client.TeamSpeakName,
-                                RadioType.None,
-                                RadioType.None,
-                                stateChange
-                            )
-                        )
-                    );
-                }
-            }
-        }
-
-        [EventHandler(Event.SaltyChat_IsSendingRelayed)]
-        private void OnPlayerIsSending(int serverId, bool isSending, bool stateChange, bool direct, List<dynamic> relays)
-        {
-            if (serverId == Game.Player.ServerId)
-            {
-                this.PlaySound("selfMicClick", false, "MicClick");
-            }
-            else if (VoiceManager._voiceClients.TryGetValue(serverId, out VoiceClient client))
-            {
-                if (isSending)
-                {
-                    this.ExecuteCommand(
-                        new PluginCommand(
-                            Command.RadioCommunicationUpdate,
-                            VoiceManager._serverUniqueIdentifier,
-                            new RadioCommunication(
-                                client.TeamSpeakName,
-                                RadioType.LongRange,
-                                RadioType.LongRange,
                                 stateChange,
                                 direct,
+                                VoiceManager.SecondaryRadioChannel == radioChannel,
                                 relays.Select(r => (string)r).ToArray()
                             )
                         )
@@ -285,7 +268,8 @@ namespace SaltyClient
                                 client.TeamSpeakName,
                                 RadioType.None,
                                 RadioType.None,
-                                stateChange
+                                stateChange,
+                                VoiceManager.SecondaryRadioChannel == radioChannel
                             )
                         )
                     );
@@ -400,18 +384,30 @@ namespace SaltyClient
         {
             Game.DisableControlThisFrame(0, Control.EnterCheatCode);
             Game.DisableControlThisFrame(0, Control.PushToTalk);
+            Game.DisableControlThisFrame(0, Control.OpenSatchelMenu);
 
-            if (Game.IsControlJustPressed(0, Control.EnterCheatCode))
+            if (Game.Player.IsAlive)
             {
-                this.ToggleVoiceRange();
-            }
+                if (Game.IsControlJustPressed(0, Control.EnterCheatCode))
+                {
+                    this.ToggleVoiceRange();
+                }
 
-            if (VoiceManager._radioChannel != null && Game.Player.IsAlive)
-            {
-                if (Game.IsControlJustPressed(0, Control.PushToTalk))
-                    BaseScript.TriggerServerEvent(Event.SaltyChat_IsSending, true);
-                else if (Game.IsControlJustReleased(0, Control.PushToTalk))
-                    BaseScript.TriggerServerEvent(Event.SaltyChat_IsSending, false);
+                if (VoiceManager.PrimaryRadioChannel != null)
+                {
+                    if (Game.IsControlJustPressed(0, Control.PushToTalk))
+                        BaseScript.TriggerServerEvent(Event.SaltyChat_IsSending, VoiceManager.PrimaryRadioChannel, true);
+                    else if (Game.IsControlJustReleased(0, Control.PushToTalk))
+                        BaseScript.TriggerServerEvent(Event.SaltyChat_IsSending, VoiceManager.PrimaryRadioChannel, false);
+                }
+
+                if (VoiceManager.SecondaryRadioChannel != null)
+                {
+                    if (Game.IsControlJustPressed(0, Control.OpenSatchelMenu))
+                        BaseScript.TriggerServerEvent(Event.SaltyChat_IsSending, VoiceManager.SecondaryRadioChannel, true);
+                    else if (Game.IsControlJustReleased(0, Control.OpenSatchelMenu))
+                        BaseScript.TriggerServerEvent(Event.SaltyChat_IsSending, VoiceManager.SecondaryRadioChannel, false);
+                }
             }
 
             await Task.FromResult(0);
@@ -481,26 +477,26 @@ namespace SaltyClient
         }
 
         /// <summary>
-        /// Toggles voice range through <see cref="Voice.VoiceRanges"/>
+        /// Toggles voice range through <see cref="SharedData.VoiceRanges"/>
         /// </summary>
         public void ToggleVoiceRange()
         {
-            int index = Array.IndexOf(SharedData.VoiceRanges, VoiceManager._voiceRange);
+            int index = Array.IndexOf(SharedData.VoiceRanges, VoiceManager.VoiceRange);
 
             if (index < 0)
             {
-                VoiceManager._voiceRange = SharedData.VoiceRanges[1];
+                VoiceManager.VoiceRange = SharedData.VoiceRanges[1];
             }
             else if (index + 1 >= SharedData.VoiceRanges.Length)
             {
-                VoiceManager._voiceRange = SharedData.VoiceRanges[0];
+                VoiceManager.VoiceRange = SharedData.VoiceRanges[0];
             }
             else
             {
-                VoiceManager._voiceRange = SharedData.VoiceRanges[index + 1];
+                VoiceManager.VoiceRange = SharedData.VoiceRanges[index + 1];
             }
 
-            BaseScript.TriggerServerEvent(Event.SaltyChat_SetVoiceRange, VoiceManager._voiceRange);
+            BaseScript.TriggerServerEvent(Event.SaltyChat_SetVoiceRange, VoiceManager.VoiceRange);
 
             // ToDo
             //CitizenFX.Core.UI.Screen.ShowNotification($"New voice range is {VoiceManager._voiceRange} metres.");
@@ -510,7 +506,7 @@ namespace SaltyClient
             BaseScript.TriggerEvent("chat:addMessage", new
             {
                 color = new[] { color.R, color.G, color.B },
-                args = new[] { "Salty Chat", $"New voice range is {VoiceManager._voiceRange} metres." }
+                args = new[] { "Salty Chat", $"New voice range is {VoiceManager.VoiceRange} metres." }
             });
         }
 

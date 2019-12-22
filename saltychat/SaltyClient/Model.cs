@@ -357,9 +357,10 @@ namespace SaltyClient
         public bool PlayMicClick { get; set; }
 
         public bool Direct { get; set; }
+        public bool Secondary { get; set; }
         public string[] RelayedBy { get; set; }
 
-        public RadioCommunication(string name, RadioType senderRadioType, RadioType ownRadioType, bool playMicClick)
+        public RadioCommunication(string name, RadioType senderRadioType, RadioType ownRadioType, bool playMicClick, bool isSecondary)
         {
             this.Name = name;
             this.SenderRadioType = senderRadioType;
@@ -367,9 +368,10 @@ namespace SaltyClient
             this.PlayMicClick = playMicClick;
 
             this.Direct = true;
+            this.Secondary = isSecondary;
         }
 
-        public RadioCommunication(string name, RadioType senderRadioType, RadioType ownRadioType, bool playMicClick, bool direct, string[] relayedBy)
+        public RadioCommunication(string name, RadioType senderRadioType, RadioType ownRadioType, bool playMicClick, bool direct, bool isSecondary, string[] relayedBy)
         {
             this.Name = name;
             this.SenderRadioType = senderRadioType;
@@ -377,6 +379,7 @@ namespace SaltyClient
             this.PlayMicClick = playMicClick;
 
             this.Direct = direct;
+            this.Secondary = isSecondary;
             this.RelayedBy = relayedBy;
         }
     }

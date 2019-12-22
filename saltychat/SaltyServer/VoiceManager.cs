@@ -36,7 +36,7 @@ namespace SaltyServer
 
             // Radio Exports
             this.Exports.Add("SetPlayerRadioSpeaker", new Action<int, bool>(this.SetPlayerRadioSpeaker));
-            this.Exports.Add("SetPlayerRadioChannel", new Action<int, string>(this.SetPlayerRadioChannel));
+            this.Exports.Add("SetPlayerRadioChannel", new Action<int, string, bool>(this.SetPlayerRadioChannel));
             this.Exports.Add("RemovePlayerRadioChannel", new Action<int, string>(this.RemovePlayerRadioChannel));
             this.Exports.Add("SetRadioTowers", new Action<dynamic>(this.SetRadioTowers));
         }
@@ -109,6 +109,14 @@ namespace SaltyServer
         }
         #endregion
 
+        #region RemoteEvents (Proximity)
+        [EventHandler(Event.SaltyChat_IsTalking)]
+        private void OnPlayerIsTalking([FromSource] Player player, bool isTalking)
+        {
+            BaseScript.TriggerClientEvent(Event.SaltyChat_IsTalking, player.Handle, isTalking);
+        }
+        #endregion
+
         #region Exports (Phone)
         private void EstablishCall(int callerNetId, int partnerNetId)
         {
@@ -137,11 +145,11 @@ namespace SaltyServer
             VoiceManager.SetRadioSpeaker(player, toggle);
         }
 
-        private void SetPlayerRadioChannel(int netId, string radioChannelName)
+        private void SetPlayerRadioChannel(int netId, string radioChannelName, bool isPrimary)
         {
             Player player = this.Players[netId];
 
-            VoiceManager.JoinRadioChannel(player, radioChannelName);
+            VoiceManager.JoinRadioChannel(player, radioChannelName, isPrimary);
         }
 
         private void RemovePlayerRadioChannel(int netId, string radioChannelName)
@@ -248,9 +256,23 @@ namespace SaltyServer
                 return;
             }
 
-            VoiceManager.JoinRadioChannel(player, args[0]);
+            VoiceManager.JoinRadioChannel(player, args[0], true);
 
             player.SendChatMessage("Radio", $"You joined channel \"{args[0]}\".");
+        }
+
+        [Command("joinsecradio")]
+        private void OnJoinSecondaryRadioChannel(Player player, string[] args)
+        {
+            if (args.Length < 1)
+            {
+                player.SendChatMessage("Usage", "/joinsecradio {radioChannelName}");
+                return;
+            }
+
+            VoiceManager.JoinRadioChannel(player, args[0], false);
+
+            player.SendChatMessage("Radio", $"You joined secondary channel \"{args[0]}\".");
         }
 
         [Command("leaveradio")]
@@ -271,42 +293,21 @@ namespace SaltyServer
 
         #region Remote Events (Radio)
         [EventHandler(Event.SaltyChat_IsSending)]
-        private void OnSendingOnRadio([FromSource] Player player, bool isSending)
+        private void OnSendingOnRadio([FromSource] Player player, string radioChannelName, bool isSending)
         {
             if (!VoiceManager._voiceClients.TryGetValue(player, out VoiceClient voiceClient))
                 return;
 
-            foreach (RadioChannel radioChannel in VoiceManager.RadioChannels)
-            {
-                if (radioChannel.IsMember(voiceClient))
-                {
-                    radioChannel.Send(voiceClient, isSending);
+            RadioChannel radioChannel = VoiceManager.GetRadioChannel(radioChannelName, false);
 
-                    return;
-                }
-            }
+            if (radioChannel == null || !radioChannel.IsMember(voiceClient))
+                return;
+
+            radioChannel.Send(voiceClient, isSending);
         }
         #endregion
 
-        #region Methods
-        public static string GetTeamSpeakName()
-        {
-            string name;
-
-            do
-            {
-                name = Guid.NewGuid().ToString().Replace("-", "");
-
-                if (name.Length > 30)
-                {
-                    name = name.Remove(29, name.Length - 30);
-                }
-            }
-            while (VoiceManager._voiceClients.Values.Any(c => c.TeamSpeakName == name));
-
-            return name;
-        }
-
+        #region Methods (Radio)
         public static RadioChannel GetRadioChannel(string name, bool create)
         {
             RadioChannel radioChannel;
@@ -324,6 +325,84 @@ namespace SaltyServer
             }
 
             return radioChannel;
+        }
+
+        public static void SetRadioSpeaker(Player player, bool toggle)
+        {
+            if (!VoiceManager._voiceClients.TryGetValue(player, out VoiceClient voiceClient))
+                return;
+
+            voiceClient.RadioSpeaker = toggle;
+        }
+
+        public static void JoinRadioChannel(Player player, string radioChannelName, bool isPrimary)
+        {
+            if (!VoiceManager._voiceClients.TryGetValue(player, out VoiceClient voiceClient))
+                return;
+
+            foreach (RadioChannel channel in VoiceManager.RadioChannels)
+            {
+                if (channel.Members.Any(v => v.VoiceClient == voiceClient && v.IsPrimary == isPrimary))
+                    return;
+            }
+
+            RadioChannel radioChannel = VoiceManager.GetRadioChannel(radioChannelName, true);
+
+            radioChannel.AddMember(voiceClient, isPrimary);
+        }
+
+        public static void LeaveRadioChannel(Player player, string radioChannelName)
+        {
+            if (!VoiceManager._voiceClients.TryGetValue(player, out VoiceClient voiceClient))
+                return;
+
+            RadioChannel radioChannel = VoiceManager.GetRadioChannel(radioChannelName, false);
+
+            if (radioChannel != null)
+            {
+                radioChannel.RemoveMember(voiceClient);
+
+                if (radioChannel.Members.Length == 0)
+                {
+                    VoiceManager._radioChannels.Remove(radioChannel);
+                }
+            }
+        }
+
+        public static void SendingOnRadio(Player player, bool isSending)
+        {
+            if (!VoiceManager._voiceClients.TryGetValue(player, out VoiceClient voiceClient))
+                return;
+
+            foreach (RadioChannel radioChannel in VoiceManager.RadioChannels)
+            {
+                if (radioChannel.IsMember(voiceClient))
+                {
+                    radioChannel.Send(voiceClient, isSending);
+
+                    return;
+                }
+            }
+        }
+        #endregion
+
+        #region Methods (Misc)
+        public static string GetTeamSpeakName()
+        {
+            string name;
+
+            do
+            {
+                name = Guid.NewGuid().ToString().Replace("-", "");
+
+                if (name.Length > 30)
+                {
+                    name = name.Remove(29, name.Length - 30);
+                }
+            }
+            while (VoiceManager._voiceClients.Values.Any(c => c.TeamSpeakName == name));
+
+            return name;
         }
 
         public static bool IsVersionAccepted(string branch, string version)
@@ -373,66 +452,6 @@ namespace SaltyServer
             }
 
             return true;
-        }
-        #endregion
-
-        #region Methods (Radio)
-        public static void SetRadioSpeaker(Player player, bool toggle)
-        {
-            if (!VoiceManager._voiceClients.TryGetValue(player, out VoiceClient voiceClient))
-                return;
-
-            voiceClient.RadioSpeaker = toggle;
-        }
-
-        public static void JoinRadioChannel(Player player, string radioChannelName)
-        {
-            if (!VoiceManager._voiceClients.TryGetValue(player, out VoiceClient voiceClient))
-                return;
-
-            foreach (RadioChannel channel in VoiceManager.RadioChannels)
-            {
-                if (channel.IsMember(voiceClient))
-                    return;
-            }
-
-            RadioChannel radioChannel = VoiceManager.GetRadioChannel(radioChannelName, true);
-
-            radioChannel.AddMember(voiceClient);
-        }
-
-        public static void LeaveRadioChannel(Player player, string radioChannelName)
-        {
-            if (!VoiceManager._voiceClients.TryGetValue(player, out VoiceClient voiceClient))
-                return;
-
-            RadioChannel radioChannel = VoiceManager.GetRadioChannel(radioChannelName, false);
-
-            if (radioChannel != null)
-            {
-                radioChannel.RemoveMember(voiceClient);
-
-                if (radioChannel.Members.Length == 0)
-                {
-                    VoiceManager._radioChannels.Remove(radioChannel);
-                }
-            }
-        }
-
-        public static void SendingOnRadio(Player player, bool isSending)
-        {
-            if (!VoiceManager._voiceClients.TryGetValue(player, out VoiceClient voiceClient))
-                return;
-
-            foreach (RadioChannel radioChannel in VoiceManager.RadioChannels)
-            {
-                if (radioChannel.IsMember(voiceClient))
-                {
-                    radioChannel.Send(voiceClient, isSending);
-
-                    return;
-                }
-            }
         }
         #endregion
     }
