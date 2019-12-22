@@ -379,13 +379,13 @@ namespace SaltyClient
         [Tick]
         private async Task OnControlTick()
         {
-            Game.DisableControlThisFrame(0, Control.EnterCheatCode);
+            Game.DisableControlThisFrame(0, Control.OpenJournal);
             Game.DisableControlThisFrame(0, Control.PushToTalk);
             Game.DisableControlThisFrame(0, Control.OpenSatchelMenu);
 
             if (Game.Player.IsAlive)
             {
-                if (Game.IsControlJustPressed(0, Control.EnterCheatCode))
+                if (Game.IsControlJustPressed(0, Control.OpenJournal))
                 {
                     this.ToggleVoiceRange();
                 }
