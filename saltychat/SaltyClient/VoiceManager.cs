@@ -298,33 +298,42 @@ namespace SaltyClient
 
         #region NUI Events
         [EventHandler("__cfx_nui:" + NuiEvent.SaltyChat_OnConnected)]
-        private void OnConnected()
+        private void OnConnected(dynamic dummy, dynamic cb)
         {
             VoiceManager._isConnected = true;
 
             if (VoiceManager._isEnabled)
                 this.InitializePlugin();
+
+            cb("");
         }
 
         [EventHandler("__cfx_nui:" + NuiEvent.SaltyChat_OnDisconnected)]
-        private void OnDisconnected()
+        private void OnDisconnected(dynamic dummy, dynamic cb)
         {
             VoiceManager._isConnected = false;
+
+            cb("");
         }
 
         [EventHandler("__cfx_nui:" + NuiEvent.SaltyChat_OnMessage)]
-        private void OnMessage(dynamic message)
+        private void OnMessage(dynamic message, dynamic cb)
         {
             PluginCommand pluginCommand = PluginCommand.Deserialize(message);
 
             if (pluginCommand.Command == Command.Ping && pluginCommand.ServerUniqueIdentifier == VoiceManager._serverUniqueIdentifier)
             {
                 this.ExecuteCommand(new PluginCommand(VoiceManager._serverUniqueIdentifier));
+
+                cb("");
                 return;
             }
 
             if (!pluginCommand.TryGetState(out PluginState pluginState))
+            {
+                cb("");
                 return;
+            }
 
             if (pluginState.IsReady != VoiceManager._isIngame)
             {
@@ -333,45 +342,39 @@ namespace SaltyClient
                 VoiceManager._isIngame = pluginState.IsReady;
             }
 
-            bool hasTalkingChanged = false;
-            bool hasMicMutedChanged = false;
-            bool hasSoundMutedChanged = false;
-
             if (pluginState.IsTalking != VoiceManager.IsTalking)
             {
                 VoiceManager.IsTalking = pluginState.IsTalking;
-                hasTalkingChanged = true;
+
+                BaseScript.TriggerEvent(Event.SaltyChat_TalkStateChanged, VoiceManager.IsTalking);
             }
 
             if (pluginState.IsMicrophoneMuted != VoiceManager.IsMicrophoneMuted)
             {
                 VoiceManager.IsMicrophoneMuted = pluginState.IsMicrophoneMuted;
-                hasMicMutedChanged = true;
+
+                BaseScript.TriggerEvent(Event.SaltyChat_MicStateChanged, VoiceManager.IsMicrophoneMuted);
             }
 
             if (pluginState.IsSoundMuted != VoiceManager.IsSoundMuted)
             {
                 VoiceManager.IsSoundMuted = pluginState.IsSoundMuted;
-                hasSoundMutedChanged = true;
+
+                BaseScript.TriggerEvent(Event.SaltyChat_SoundStateChanged, VoiceManager.IsSoundMuted);
             }
 
-            if (hasTalkingChanged)
-                BaseScript.TriggerEvent(Event.SaltyChat_TalkStateChanged, VoiceManager.IsTalking);
-
-            if (hasMicMutedChanged)
-                BaseScript.TriggerEvent(Event.SaltyChat_MicStateChanged, VoiceManager.IsMicrophoneMuted);
-
-            if (hasSoundMutedChanged)
-                BaseScript.TriggerEvent(Event.SaltyChat_SoundStateChanged, VoiceManager.IsSoundMuted);
+            cb("");
         }
 
         [EventHandler("__cfx_nui:" + NuiEvent.SaltyChat_OnError)]
-        private void OnError(dynamic message)
+        private void OnError(dynamic message, dynamic cb)
         {
             PluginCommand pluginCommand = PluginCommand.Deserialize(message);
 
             if (pluginCommand.TryGetError(out PluginError pluginError))
                 Debug.WriteLine($"[Salty Chat] Error: {pluginError.Error} - Message: {pluginError.Message}");
+
+            cb("");
         }
         #endregion
 
