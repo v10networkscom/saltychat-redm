@@ -19,9 +19,11 @@ namespace RedM.External
 {
     public class Ped : Entity
     {
+        public Tasks Tasks { get; }
+
         public Ped(int handle) : base(handle)
         {
-
+            this.Tasks = new Tasks(this);
         }
     }
 

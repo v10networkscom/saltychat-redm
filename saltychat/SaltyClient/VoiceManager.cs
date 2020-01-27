@@ -346,6 +346,11 @@ namespace SaltyClient
             {
                 VoiceManager.IsTalking = pluginState.IsTalking;
 
+                if (VoiceManager.IsTalking)
+                    _ = Game.PlayerPed.Tasks.PlayFacialAnimation("face_human@gen_male@base", "mood_talking_normal");
+                else
+                    _ = Game.PlayerPed.Tasks.PlayFacialAnimation("face_human@gen_male@base", "mood_normal");
+
                 BaseScript.TriggerEvent(Event.SaltyChat_TalkStateChanged, VoiceManager.IsTalking);
             }
 

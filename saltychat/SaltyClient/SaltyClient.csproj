@@ -57,6 +57,7 @@
     <Compile Include="External\PedHash.cs" />
     <Compile Include="External\Player.cs" />
     <Compile Include="External\PlayerList.cs" />
+    <Compile Include="External\Tasks.cs" />
     <Compile Include="External\World.cs" />
     <Compile Include="Model.cs" />
     <Compile Include="NuiEvent.cs" />
