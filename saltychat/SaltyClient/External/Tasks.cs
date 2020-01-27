@@ -11,7 +11,7 @@ namespace RedM.External
 
         internal Tasks(Ped ped)
         {
-            Ped = ped;
+            this.Ped = ped;
         }
 
         /// <summary>
@@ -21,22 +21,23 @@ namespace RedM.External
         /// <param name="animName"></param>
         public async Task PlayFacialAnimation(string animDict, string animName)
         {
-            if (!Function.Call<bool>(Hash.HAS_ANIM_DICT_LOADED, animDict))
+            if (!API.HasAnimDictLoaded(animDict))
             {
-                Function.Call(Hash.REQUEST_ANIM_DICT, animDict);
+                API.RequestAnimDict(animDict);
             }
 
-            var end = DateTime.UtcNow.AddMilliseconds(1000f);
-            while (!Function.Call<bool>(Hash.HAS_ANIM_DICT_LOADED, animDict))
+            var end = API.GetGameTimer() + 1000;
+            while (!API.HasAnimDictLoaded(animDict))
             {
-                if (DateTime.UtcNow >= end)
+                if (API.GetGameTimer() >= end)
                 {
                     return;
                 }
+
                 await BaseScript.Delay(0);
             }
 
-            Function.Call(Hash.SET_FACIAL_IDLE_ANIM_OVERRIDE, Ped.Handle, animName, animDict);
+            API.SetFacialIdleAnimOverride(this.Ped.Handle, animName, animDict);
         }
 
         /// <summary>
@@ -46,7 +47,7 @@ namespace RedM.External
         /// <param name="animName"></param>
         public void ClearFacialAnimation()
         {
-            Function.Call(Hash.CLEAR_FACIAL_IDLE_ANIM_OVERRIDE, Ped.Handle);
+            API.ClearFacialIdleAnimOverride(this.Ped.Handle);
         }
     }
 }

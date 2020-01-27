@@ -317,7 +317,7 @@ namespace SaltyClient
         }
 
         [EventHandler("__cfx_nui:" + NuiEvent.SaltyChat_OnMessage)]
-        private async void OnMessage(dynamic message, dynamic cb)
+        private void OnMessage(dynamic message, dynamic cb)
         {
             PluginCommand pluginCommand = PluginCommand.Deserialize(message);
 
@@ -347,9 +347,9 @@ namespace SaltyClient
                 VoiceManager.IsTalking = pluginState.IsTalking;
 
                 if (VoiceManager.IsTalking)
-                    await Game.PlayerPed.Tasks.PlayFacialAnimation("face_human@gen_male@base", "mood_talking_normal");
+                    _ = Game.PlayerPed.Tasks.PlayFacialAnimation("face_human@gen_male@base", "mood_talking_normal");
                 else
-                    await Game.PlayerPed.Tasks.PlayFacialAnimation("face_human@gen_male@base", "mood_normal");
+                    _ = Game.PlayerPed.Tasks.PlayFacialAnimation("face_human@gen_male@base", "mood_normal");
 
                 BaseScript.TriggerEvent(Event.SaltyChat_TalkStateChanged, VoiceManager.IsTalking);
             }

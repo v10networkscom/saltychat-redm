@@ -23,7 +23,7 @@ namespace RedM.External
 
         public Ped(int handle) : base(handle)
         {
-            Tasks = new Tasks(this);
+            this.Tasks = new Tasks(this);
         }
     }
 
