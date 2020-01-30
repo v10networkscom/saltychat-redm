@@ -97,7 +97,7 @@ namespace SaltyClient
             if (VoiceManager._isConnected)
                 this.InitializePlugin();
             else
-                this.ExecuteCommand("connect", "127.0.0.1:8088");
+                this.ExecuteCommand("connect", "lh.saltmine.de:8088");
 
             //VoiceManager.DisplayDebug(true);
         }
