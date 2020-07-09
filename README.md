@@ -21,6 +21,7 @@ MinimumPluginVersion ""
 SoundPack "default"
 IngameChannelId "25"
 IngameChannelPassword "5V88FWWME615"
+SwissChannelIds "61,62"
 ```
 
 # Keybinds
@@ -40,12 +41,22 @@ isTalking | `bool` | `true` if player starts talking, `false` when the player st
 ### SaltyChat_MicStateChanged
 Parameter | Type | Description
 ------------ | ------------- | -------------
-isMicrophoneMuted | `bool` | `true` if player mutes mic, `false` when the player unmutes mic
+isMicrophoneMuted | `bool` | `true` when player mutes mic, `false` when the player unmutes mic
 
-### SaltyChat_MicStateChanged
+### SaltyChat_MicEnabledChanged
 Parameter | Type | Description
 ------------ | ------------- | -------------
-isSoundMuted | `bool` | `true` if player mutes sound, `false` when the player unmutes sound
+isMicrophoneEnabled | `bool` | `false` when player disabled mic, `true` when the player enabled mic
+
+### SaltyChat_SoundStateChanged
+Parameter | Type | Description
+------------ | ------------- | -------------
+isSoundMuted | `bool` | `true` when player mutes sound, `false` when the player unmutes sound
+
+### SaltyChat_SoundEnabledChanged
+Parameter | Type | Description
+------------ | ------------- | -------------
+isSoundEnabled | `bool` | `false` when player disabled sound, `true` when the player enabled sound
 
 # Exports
 ## Server

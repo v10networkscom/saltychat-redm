@@ -61,7 +61,7 @@ namespace SaltyServer
                     {
                         if (member.VoiceClient.RadioSpeaker)
                         {
-                            foreach (VoiceClient client in VoiceManager.VoiceClients)
+                            foreach (VoiceClient client in VoiceManager.Instance.VoiceClients)
                             {
                                 client.Player.TriggerEvent(Event.SaltyChat_IsSendingRelayed, voiceClient.Player.Handle, this.Name, false, true, false, new string[0]);
                             }
@@ -102,7 +102,7 @@ namespace SaltyServer
             {
                 string[] channelMemberNames = onSpeaker.Select(m => m.VoiceClient.TeamSpeakName).ToArray();
 
-                foreach (VoiceClient remoteClient in VoiceManager.VoiceClients)
+                foreach (VoiceClient remoteClient in VoiceManager.Instance.VoiceClients)
                 {
                     remoteClient.Player.TriggerEvent(Event.SaltyChat_IsSendingRelayed, voiceClient.Player.Handle, this.Name, isSending, stateChanged, this.IsMember(remoteClient), channelMemberNames);
                 }

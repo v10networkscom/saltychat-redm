@@ -12,6 +12,7 @@ EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		SaltyShared\SaltyShared.projitems*{09379468-236a-49ff-94ff-9c6dbdfa70c2}*SharedItemsImports = 4
+		SaltyShared\SaltyShared.projitems*{46a559fa-1994-4b93-8d83-ec5ce19b2d18}*SharedItemsImports = 5
 		SaltyShared\SaltyShared.projitems*{fc737fed-b9fc-4f29-b025-812f29a614a0}*SharedItemsImports = 13
 	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using CitizenFX.Core;
 
 namespace SaltyClient
 {
@@ -35,34 +36,22 @@ namespace SaltyClient
         /// Foldername of the sound pack that will be used (%AppData%\TS3Client\Plugins\SaltyChat\{SoundPack}\)
         /// </summary>
         public string SoundPack { get; set; }
+
+        /// <summary>
+        /// IDs of channels which the player can join, while the game instace is running
+        /// </summary>
+        public ulong[] SwissChannelIds { get; set; }
         #endregion
 
         #region CTOR
-        public GameInstance(string serverUniqueIdentifier, string name, ulong channelId)
-        {
-            this.ServerUniqueIdentifier = serverUniqueIdentifier;
-            this.Name = name;
-            this.ChannelId = channelId;
-            this.ChannelPassword = String.Empty;
-            this.SoundPack = "default";
-        }
-
-        public GameInstance(string serverUniqueIdentifier, string name, ulong channelId, string channelPassword)
-        {
-            this.ServerUniqueIdentifier = serverUniqueIdentifier;
-            this.Name = name;
-            this.ChannelId = channelId;
-            this.ChannelPassword = channelPassword;
-            this.SoundPack = "default";
-        }
-
-        public GameInstance(string serverUniqueIdentifier, string name, ulong channelId, string channelPassword, string soundPack)
+        public GameInstance(string serverUniqueIdentifier, string name, ulong channelId, string channelPassword, string soundPack, ulong[] swissChannels)
         {
             this.ServerUniqueIdentifier = serverUniqueIdentifier;
             this.Name = name;
             this.ChannelId = channelId;
             this.ChannelPassword = channelPassword;
             this.SoundPack = soundPack;
+            this.SwissChannelIds = swissChannels;
         }
         #endregion
     }
@@ -74,22 +63,16 @@ namespace SaltyClient
         public Error Error { get; set; }
         public string Message { get; set; }
         public string ServerIdentifier { get; set; }
-    }
-    #endregion
 
-    #region PluginState
-    /// <summary>
-    /// Will be received from the WebSocket if e.g. the mic muted/unmuted
-    /// </summary>
-    public class PluginState
-    {
-        public string UpdateBranch { get; set; }
-        public string Version { get; set; }
-        public bool IsConnectedToServer { get; set; }
-        public bool IsReady { get; set; }
-        public bool IsTalking { get; set; }
-        public bool IsMicrophoneMuted { get; set; }
-        public bool IsSoundMuted { get; set; }
+        public static PluginError Deserialize(dynamic obj)
+        {
+            return new PluginError()
+            {
+                Error = (Error)obj.Error,
+                Message = obj.Message,
+                ServerIdentifier = obj.ServerIdentifier
+            };
+        }
     }
     #endregion
 
@@ -150,7 +133,6 @@ namespace SaltyClient
 
         public static PluginCommand Deserialize(dynamic obj)
         {
-            //return Newtonsoft.Json.JsonConvert.DeserializeObject<PluginCommand>(json);
             return new PluginCommand()
             {
                 Command = (Command)obj.Command,
@@ -159,11 +141,11 @@ namespace SaltyClient
             };
         }
 
-        public bool TryGetError(out PluginError pluginError)
+        public bool TryGetPayload<T>(out T payload)
         {
             try
             {
-                pluginError = this.Parameter.ToObject<PluginError>();
+                payload = this.Parameter.ToObject<T>();
 
                 return true;
             }
@@ -172,46 +154,134 @@ namespace SaltyClient
                 // do nothing
             }
 
-            pluginError = default;
+            payload = default;
             return false;
         }
+        #endregion
 
-        public bool TryGetState(out PluginState pluginState)
+        #region Conditional Property Serialization
+        public bool ShouldSerializeParameter() => this.Parameter != null;
+        #endregion
+    }
+    #endregion
+
+    #region PluginState
+    /// <summary>
+    /// Will be received from the WebSocket if after starting a new instance
+    /// </summary>
+    public class PluginState
+    {
+        public string Version { get; set; }
+        public int ActiveInstances { get; set; }
+    }
+    #endregion
+
+    #region InstanceState
+    /// <summary>
+    /// Will be received from the WebSocket if the player (dis-)connects to the specified TeamSpeak server or channel
+    /// </summary>
+    public class InstanceState
+    {
+        public bool IsConnectedToServer { get; set; }
+        public bool IsReady { get; set; }
+    }
+    #endregion
+
+    #region SoundState
+    /// <summary>
+    /// Will be received from the WebSocket on every microphone and sound state change
+    /// </summary>
+    public class SoundState
+    {
+        public bool IsMicrophoneMuted { get; set; }
+        public bool IsMicrophoneEnabled { get; set; }
+        public bool IsSoundMuted { get; set; }
+        public bool IsSoundEnabled { get; set; }
+    }
+    #endregion
+
+    #region TalkState
+    public class TalkState
+    {
+        public string Name { get; set; }
+        public bool IsTalking { get; set; }
+    }
+    #endregion
+
+    #region SelfState
+    /// <summary>
+    /// Used for <see cref="Command.SelfStateUpdate"/>
+    /// </summary>
+    public class SelfState
+    {
+        #region Sub Classes
+        public class EchoEffect
         {
-            if (this.Command == Command.StateUpdate)
+            public int Duration { get; set; }
+            public float Rolloff { get; set; }
+            public int Delay { get; set; }
+
+            public EchoEffect(int duration = 100, float rolloff = 0.3f, int delay = 250)
             {
-                try
-                {
-                    pluginState = this.Parameter.ToObject<PluginState>();
-
-                    return true;
-                }
-                catch
-                {
-                    // do nothing
-                }
+                this.Duration = duration;
+                this.Rolloff = rolloff;
+                this.Delay = delay;
             }
-
-            pluginState = default;
-            return false;
         }
+        #endregion
+
+        #region Properties
+        public Vector3 Position { get; set; }
+        public float Rotation { get; set; }
+        public bool IsAlive { get; set; }
+        public EchoEffect Echo { get; set; }
+        #endregion
+
+        #region CTOR
+        public SelfState(Vector3 position, float rotation, bool echo = false)
+        {
+            this.Position = new Vector3(position.X, position.Y, position.Z);
+            this.Rotation = rotation;
+            this.IsAlive = true;
+
+            if (echo)
+                this.Echo = new EchoEffect();
+        }
+        #endregion
+
+        #region Conditional Property Serialization
+        public bool ShouldSerializeIsAlive() => !this.IsAlive;
+        public bool ShouldSerializeEcho() => this.Echo != null;
         #endregion
     }
     #endregion
 
     #region PlayerState
     /// <summary>
-    /// Used for <see cref="Command.SelfStateUpdate"/> and <see cref="Command.PlayerStateUpdate"/>
+    /// Used for <see cref="Command.PlayerStateUpdate"/>
     /// </summary>
     public class PlayerState
     {
+        #region Sub Classes
+        public class MuffleEffect
+        {
+            public int Intensity { get; set; }
+
+            public MuffleEffect(int intensity)
+            {
+                this.Intensity = intensity;
+            }
+        }
+        #endregion
+
         #region Properties
         public string Name { get; set; }
-        public CitizenFX.Core.Vector3 Position { get; set; }
-        public float? Rotation { get; set; }
-        public float? VoiceRange { get; set; }
+        public Vector3 Position { get; set; }
+        public float VoiceRange { get; set; }
         public bool IsAlive { get; set; }
         public float? VolumeOverride { get; set; }
+        public bool DistanceCulled { get; set; }
+        public MuffleEffect Muffle { get; set; }
         #endregion
 
         #region CTOR
@@ -225,29 +295,24 @@ namespace SaltyClient
         }
 
         /// <summary>
-        /// Used for <see cref="Command.SelfStateUpdate"/>
-        /// </summary>
-        /// <param name="position"></param>
-        /// <param name="rotation"></param>
-        public PlayerState(CitizenFX.Core.Vector3 position, float rotation)
-        {
-            this.Position = position;
-            this.Rotation = rotation;
-        }
-
-        /// <summary>
         /// Used for <see cref="Command.PlayerStateUpdate"/>
         /// </summary>
         /// <param name="name"></param>
         /// <param name="position"></param>
         /// <param name="voiceRange"></param>
         /// <param name="isAlive"></param>
-        public PlayerState(string name, CitizenFX.Core.Vector3 position, float voiceRange, bool isAlive)
+        /// <param name="distanceCulled"></param>
+        /// <param name="muffleIntensity"></param>
+        public PlayerState(string name, CitizenFX.Core.Vector3 position, float voiceRange, bool isAlive, bool distanceCulled = false, int? muffleIntensity = null)
         {
             this.Name = name;
-            this.Position = position;
+            this.Position = new Vector3(position.X, position.Y, position.Z);
             this.VoiceRange = voiceRange;
             this.IsAlive = isAlive;
+            this.DistanceCulled = distanceCulled;
+
+            if (muffleIntensity.HasValue)
+                this.Muffle = new MuffleEffect(muffleIntensity.Value);
         }
 
         /// <summary>
@@ -261,18 +326,47 @@ namespace SaltyClient
         public PlayerState(string name, CitizenFX.Core.Vector3 position, float voiceRange, bool isAlive, float volumeOverride)
         {
             this.Name = name;
-            this.Position = position;
+            this.Position = new Vector3(position.X, position.Y, position.Z);
             this.VoiceRange = voiceRange;
             this.IsAlive = isAlive;
 
-            if (volumeOverride > 1.5f)
-                this.VolumeOverride = 1.5f;
+            if (volumeOverride > 1.6f)
+                this.VolumeOverride = 1.6f;
             else if (volumeOverride < 0f)
                 this.VolumeOverride = 0f;
             else
                 this.VolumeOverride = volumeOverride;
         }
         #endregion
+
+        #region Conditional Property Serialization
+        public bool ShouldSerializeName() => !String.IsNullOrEmpty(this.Name);
+
+        public bool ShouldSerializeIsAlive() => !this.IsAlive;
+
+        public bool ShouldSerializeVolumeOverride() => this.VolumeOverride.HasValue;
+
+        public bool ShouldSerializeDistanceCulled() => this.DistanceCulled;
+
+        public bool ShouldSerializeMuffle() => this.Muffle != null;
+        #endregion
+    }
+    #endregion
+
+    #region BulkUpdate
+    /// <summary>
+    /// Used for <see cref="Command.BulkUpdate"/>
+    /// </summary>
+    public class BulkUpdate
+    {
+        public ICollection<PlayerState> PlayerStates { get; set; }
+        public SelfState SelfState { get; set; }
+
+        public BulkUpdate(ICollection<PlayerState> playerStates, SelfState selfState)
+        {
+            this.PlayerStates = playerStates;
+            this.SelfState = selfState;
+        }
     }
     #endregion
 
@@ -453,75 +547,36 @@ namespace SaltyClient
     #region Command
     public enum Command
     {
-        /// <summary>
-        /// Use <see cref="GameInstance"/> as parameter
-        /// </summary>
-        Initiate,
+        // Plugin
+        PluginState = 0,
 
-        /// <summary>
-        /// Will be sent by the WebSocket and should be answered with a <see cref="Command.Pong"/>
-        /// </summary>
-        Ping,
+        // Instance
+        Initiate = 1,
+        Reset = 2,
+        Ping = 3,
+        Pong = 4,
+        InstanceState = 5,
+        SoundState = 6,
+        SelfStateUpdate = 7,
+        PlayerStateUpdate = 8,
+        BulkUpdate = 9,
+        RemovePlayer = 10,
+        TalkState = 11,
+        PlaySound = 18,
+        StopSound = 19,
 
-        /// <summary>
-        /// Answer to a <see cref="Command.Ping"/> request
-        /// </summary>
-        Pong,
+        // Phone
+        PhoneCommunicationUpdate = 20,
+        StopPhoneCommunication = 21,
 
-        /// <summary>
-        /// Will be sent by the WebSocket on state changes (e.g. mic muted/unmuted) and received by <see cref="Voice.OnPluginMessage(object[])"/> - uses <see cref="PluginState"/> as parameter
-        /// </summary>
-        StateUpdate,
+        // Radio
+        RadioCommunicationUpdate = 30,
+        StopRadioCommunication = 31,
+        RadioTowerUpdate = 32,
 
-        /// <summary>
-        /// Use <see cref="PlayerState"/> as parameter
-        /// </summary>
-        SelfStateUpdate,
-
-        /// <summary>
-        /// Use <see cref="PlayerState"/> as parameter
-        /// </summary>
-        PlayerStateUpdate,
-
-        /// <summary>
-        /// Use <see cref="string"/> as parameter
-        /// </summary>
-        RemovePlayer,
-
-        /// <summary>
-        /// Use <see cref="PhoneCommunication"/> as parameter
-        /// </summary>
-        PhoneCommunicationUpdate,
-
-        /// <summary>
-        /// Use <see cref="PhoneCommunication"/> as parameter
-        /// </summary>
-        StopPhoneCommunication,
-
-        /// <summary>
-        /// Use <see cref="RadioTower"/> as parameter
-        /// </summary>
-        RadioTowerUpdate,
-
-        /// <summary>
-        /// Use <see cref="RadioCommunication"/> as parameter
-        /// </summary>
-        RadioCommunicationUpdate,
-
-        /// <summary>
-        /// Use <see cref="RadioCommunication"/> as parameter
-        /// </summary>
-        StopRadioCommunication,
-
-        /// <summary>
-        /// Use <see cref="Sound"/> as parameter
-        /// </summary>
-        PlaySound,
-
-        /// <summary>
-        /// Use <see cref="string"/> as parameter
-        /// </summary>
-        StopSound
+        // Megaphone
+        MegaphoneCommunicationUpdate = 40,
+        StopMegaphoneCommunication = 41,
     }
     #endregion
 
