@@ -53,17 +53,6 @@ namespace SaltyClient
         #endregion
 
         #region Events
-        /*
-        [EventHandler("onClientResourceStart")]
-        private void OnResourceStart(string resourceName)
-        {
-            if (resourceName != API.GetCurrentResourceName())
-                return;
-            
-            BaseScript.TriggerServerEvent(Event.SaltyChat_Initialize);
-        }
-        */
-
         [EventHandler("onClientResourceStop")]
         private void OnResourceStop(string resourceName)
         {
