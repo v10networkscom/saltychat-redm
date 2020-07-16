@@ -203,7 +203,7 @@ namespace SaltyServer
         }
 
         [EventHandler(Event.SaltyChat_CheckVersion)]
-        private void OnCheckVersion([FromSource] Player player, string updateChannel, string version)
+        private void OnCheckVersion([FromSource] Player player, string version)
         {
             if (!this._voiceClients.TryGetValue(player, out VoiceClient client))
                 return;
