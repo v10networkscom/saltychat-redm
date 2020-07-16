@@ -22,7 +22,7 @@ namespace SaltyClient
         public string SoundPack { get; private set; }
         public ulong IngameChannel { get; private set; }
         public string IngameChannelPassword { get; private set; }
-        public ulong[] SwissChannelIds { get; private set; }
+        public ulong[] SwissChannelIds { get; private set; } = new ulong[0];
 
         public VoiceClient[] VoiceClients => this._voiceClients.Values.ToArray();
         private Dictionary<int, VoiceClient> _voiceClients = new Dictionary<int, VoiceClient>();
