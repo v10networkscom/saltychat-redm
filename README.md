@@ -10,7 +10,7 @@ Join our [Discord](https://discord.gg/MBCnqSf) and start with [Salty Chat](https
 Before starting with the setup, make sure you have OneSync enabled and your server artifacts are up to date.
 
 1. Copy the folder `saltychat` into your resources
-2. [Build the solution](https://github.com/saltminede/saltychat-docs/blob/master/installing-vs.md#installing-visual-studio) (`saltychat\SaltyChat-FiveM.sln`) with Visual Studio 2019, so the `*.net.dll` files get build
+2. [Build the solution](https://github.com/saltminede/saltychat-docs/blob/master/installing-vs.md#installing-visual-studio) (`saltychat\SaltyChat-RedM.sln`) with Visual Studio 2019, so the `*.net.dll` files get build
 3. Add `start saltychat` into your `server.cfg`
 4. Open `config.json` and adjust the [variables](https://github.com/saltminede/saltychat-docs/blob/master/setup.md#config-variables)
 ```
@@ -42,7 +42,7 @@ UltraShortRangeDistance | `float` | Maximum range of USR radio mode
 ShortRangeDistance | `float` | Maximum range of SR radio mode
 LongRangeDistace | `float` | Maximum range of LR radio mode
 MegaphoneRange | `float` | Range of the megaphone (only available while driving a police car)
-NamePattern | `string` | Naming schema of TeamSpeak clients, `{serverid}` will be replaced by the FiveM server ID of the client and `{guid}` will be replaced by a generated GUID
+NamePattern | `string` | Naming schema of TeamSpeak clients, `{serverid}` will be replaced by the RedM server ID of the client and `{guid}` will be replaced by a generated GUID
 RequestTalkStates | `bool` | Enables/disables [TalkState's](https://github.com/saltminede/saltychat-docs/blob/master/commands.md#11--talkstate)
 RequestRadioTrafficStates | `bool` | Enables/disables [RadioTrafficState's](https://github.com/saltminede/saltychat-docs/blob/master/commands.md#33--radiotrafficstate)
 
