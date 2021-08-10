@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using CitizenFX.Core;
 
 namespace SaltyClient
 {
@@ -24,6 +25,17 @@ namespace SaltyClient
             catch { }
 
             return result is object;
+        }
+
+        public static void SendChatMessage(string sender, string message)
+        {
+            System.Drawing.Color color = System.Drawing.Color.FromArgb(255, 255, 255);
+
+            BaseScript.TriggerEvent("chat:addMessage", new
+            {
+                color = new[] { color.R, color.G, color.B },
+                args = new[] { sender, message }
+            });
         }
     }
 }

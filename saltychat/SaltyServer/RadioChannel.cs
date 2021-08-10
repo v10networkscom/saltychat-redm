@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using SaltyShared;
+using Newtonsoft.Json;
 
 namespace SaltyServer
 {
@@ -39,11 +40,11 @@ namespace SaltyServer
                 {
                     this._members.Add(new RadioChannelMember(this, voiceClient, isPrimary));
 
-                    voiceClient.Player.TriggerEvent(Event.SaltyChat_SetRadioChannel, this.Name, isPrimary);
+                    voiceClient.TriggerEvent(Event.SaltyChat_SetRadioChannel, this.Name, isPrimary);
 
                     foreach (RadioChannelMember member in this._members.Where(m => m.IsSending))
                     {
-                        voiceClient.Player.TriggerEvent(Event.SaltyChat_IsSending, member.VoiceClient.Player.Handle, this.Name, true, false);
+                        voiceClient.TriggerEvent(Event.SaltyChat_IsSending, member.VoiceClient.Player.Handle, member.VoiceClient.TeamSpeakName, this.Name, true, false, member.VoiceClient.Player.GetPosition());
                     }
                 }
             }
@@ -59,18 +60,20 @@ namespace SaltyServer
                 {
                     if (member.IsSending)
                     {
-                        if (member.VoiceClient.RadioSpeaker)
+                        CitizenFX.Core.Vector3 position = member.VoiceClient.Player.GetPosition();
+
+                        if (member.VoiceClient.IsRadioSpeakerEnabled)
                         {
                             foreach (VoiceClient client in VoiceManager.Instance.VoiceClients)
                             {
-                                client.Player.TriggerEvent(Event.SaltyChat_IsSendingRelayed, voiceClient.Player.Handle, this.Name, false, true, false, new string[0]);
+                                client.TriggerEvent(Event.SaltyChat_IsSendingRelayed, voiceClient.Player.Handle, voiceClient.TeamSpeakName, this.Name, false, true, position, false, new string[0]);
                             }
                         }
                         else
                         {
                             foreach (RadioChannelMember channelMember in this._members)
                             {
-                                channelMember.VoiceClient.Player.TriggerEvent(Event.SaltyChat_IsSending, voiceClient.Player.Handle, this.Name, false, true);
+                                channelMember.VoiceClient.TriggerEvent(Event.SaltyChat_IsSending, voiceClient.Player.Handle, voiceClient.TeamSpeakName, this.Name, false, true, position);
                             }
                         }
                     }
@@ -79,10 +82,43 @@ namespace SaltyServer
 
                     foreach (RadioChannelMember channelMember in this._members.Where(m => m.IsSending))
                     {
-                        voiceClient.Player.TriggerEvent(Event.SaltyChat_IsSending, channelMember.VoiceClient.Player.Handle, this.Name, false, false);
+                        voiceClient.TriggerEvent(Event.SaltyChat_IsSending, channelMember.VoiceClient.Player.Handle, channelMember.VoiceClient.TeamSpeakName, this.Name, false, false, channelMember.VoiceClient.Player.GetPosition());
                     }
 
-                    voiceClient.Player.TriggerEvent(Event.SaltyChat_SetRadioChannel, null, member.IsPrimary);
+                    voiceClient.TriggerEvent(Event.SaltyChat_SetRadioChannel, null, member.IsPrimary);
+                }
+            }
+        }
+
+        internal void SetSpeaker(VoiceClient voiceClient, bool isEnabled)
+        {
+            if (!this.TryGetMember(voiceClient, out RadioChannelMember radioChannelMember) || radioChannelMember.IsSpeakerEnabled == isEnabled)
+                return;
+
+            radioChannelMember.IsSpeakerEnabled = isEnabled;
+            RadioChannelMember[] channelMembers = this.Members;
+            IEnumerable<RadioChannelMember> sendingMembers = channelMembers.Where(m => m.IsSending);
+
+            if (sendingMembers.Count() == 0)
+                return;
+
+            if (isEnabled || channelMembers.Any(m => m.IsSpeakerEnabled))
+            {
+                foreach (RadioChannelMember sendingMember in sendingMembers)
+                {
+                    this.Send(sendingMember.VoiceClient, true);
+                }
+            }
+            else
+            {
+                foreach (RadioChannelMember sendingMember in sendingMembers)
+                {
+                    CitizenFX.Core.Vector3 position = sendingMember.VoiceClient.Player.GetPosition();
+
+                    foreach (VoiceClient remoteClient in VoiceManager.Instance.VoiceClients.Where(v => !channelMembers.Any(m => m.VoiceClient == v)))
+                    {
+                        remoteClient.TriggerEvent(Event.SaltyChat_IsSendingRelayed, sendingMember.VoiceClient.Player.Handle, sendingMember.VoiceClient.TeamSpeakName, this.Name, false, false, position, false, new string[0]);
+                    }
                 }
             }
         }
@@ -92,11 +128,20 @@ namespace SaltyServer
             if (!this.TryGetMember(voiceClient, out RadioChannelMember radioChannelMember))
                 return;
 
+            if (VoiceManager.Instance.Configuration.EnableRadioHardcoreMode && isSending && this.Members.Any(m => m.VoiceClient != voiceClient && m.IsSending))
+            {
+                voiceClient.TriggerEvent(Event.SaltyChat_ChannelInUse, this.Name);
+
+                return;
+            }
+
             bool stateChanged = radioChannelMember.IsSending != isSending;
             radioChannelMember.IsSending = isSending;
 
             RadioChannelMember[] channelMembers = this.Members;
-            RadioChannelMember[] onSpeaker = channelMembers.Where(m => m.VoiceClient.RadioSpeaker && m.VoiceClient != voiceClient).ToArray();
+            RadioChannelMember[] onSpeaker = channelMembers.Where(m => m.IsSpeakerEnabled && m.VoiceClient != voiceClient).ToArray();
+
+            CitizenFX.Core.Vector3 position = voiceClient.Player.GetPosition();
 
             if (onSpeaker.Length > 0)
             {
@@ -104,14 +149,14 @@ namespace SaltyServer
 
                 foreach (VoiceClient remoteClient in VoiceManager.Instance.VoiceClients)
                 {
-                    remoteClient.Player.TriggerEvent(Event.SaltyChat_IsSendingRelayed, voiceClient.Player.Handle, this.Name, isSending, stateChanged, this.IsMember(remoteClient), channelMemberNames);
+                    remoteClient.TriggerEvent(Event.SaltyChat_IsSendingRelayed, voiceClient.Player.Handle, voiceClient.TeamSpeakName, this.Name, isSending, stateChanged, position, this.IsMember(remoteClient), channelMemberNames);
                 }
             }
             else
             {
                 foreach (RadioChannelMember member in channelMembers)
                 {
-                    member.VoiceClient.Player.TriggerEvent(Event.SaltyChat_IsSending, voiceClient.Player.Handle, this.Name, isSending, stateChanged);
+                    member.VoiceClient.TriggerEvent(Event.SaltyChat_IsSending, voiceClient.Player.Handle, voiceClient.TeamSpeakName, this.Name, isSending, stateChanged, position);
                 }
             }
         }
@@ -127,18 +172,20 @@ namespace SaltyServer
         #endregion
     }
 
-    internal class RadioChannelMember
+    public class RadioChannelMember
     {
         internal RadioChannel RadioChannel { get; }
         internal VoiceClient VoiceClient { get; }
         internal bool IsPrimary { get; }
         internal bool IsSending { get; set; }
+        internal bool IsSpeakerEnabled { get; set; }
 
         internal RadioChannelMember(RadioChannel radioChannel, VoiceClient voiceClient, bool isPrimary)
         {
             this.RadioChannel = radioChannel;
             this.VoiceClient = voiceClient;
             this.IsPrimary = isPrimary;
+            this.IsSpeakerEnabled = voiceClient.IsRadioSpeakerEnabled;
         }
     }
 }

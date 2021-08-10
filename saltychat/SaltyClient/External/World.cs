@@ -12,6 +12,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 */
 
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using CitizenFX.Core;
 using CitizenFX.Core.Native;
@@ -45,6 +46,31 @@ namespace RedM.External
             API.GetScreenCoordFromWorldCoord(pos.X, pos.Y, pos.Z, ref screenX, ref screenY);
 
             return new Vector2(screenX, screenY);
+        }
+
+        public static Ped[] GetAllPeds()
+        {
+            List<Ped> peds = new List<Ped>();
+
+            int entHandle = -1;
+            int handle = API.FindFirstPed(ref entHandle);
+            Ped ped = (Ped)Entity.FromHandle(entHandle);
+
+            if (ped != null && ped.Exists())
+                peds.Add(ped);
+
+            entHandle = -1;
+
+            while (API.FindNextPed(handle, ref entHandle))
+            {
+                ped = (Ped)Entity.FromHandle(entHandle);
+                if (ped != null && ped.Exists())
+                    peds.Add(ped);
+                entHandle = -1;
+            }
+
+            API.EndFindPed(handle);
+            return peds.ToArray();
         }
     }
 

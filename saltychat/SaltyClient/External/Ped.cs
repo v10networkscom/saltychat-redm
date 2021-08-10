@@ -25,6 +25,29 @@ namespace RedM.External
         {
             this.Tasks = new Tasks(this);
         }
+
+        public bool IsPlayer => API.IsPedAPlayer(this.Handle);
+
+        public bool IsSwimming => API.IsPedSwimming(Handle);
+        public bool IsSwimmingUnderWater => API.IsPedSwimmingUnderWater(Handle);
+
+        public async void PlayFacialAnimation(string animDict, string animName)
+        {
+            if (!API.HasAnimDictLoaded(animDict))
+                API.RequestAnimDict(animDict);
+
+            int end = API.GetGameTimer() + 1000;
+
+            while (!API.HasAnimDictLoaded(animDict))
+            {
+                if (API.GetGameTimer() >= end)
+                    return;
+
+                await BaseScript.Delay(0);
+            }
+
+            API.SetFacialIdleAnimOverride(this.Handle, animName, animDict);
+        }
     }
 
     public enum Gender

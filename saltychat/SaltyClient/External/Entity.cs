@@ -35,6 +35,8 @@ namespace RedM.External
 
         public Model Model => new Model(API.GetEntityModel(Handle));
 
+        public int NetworkId => API.NetworkGetNetworkIdFromEntity(Handle);
+
         public virtual Vector3 Position
         {
             get => API.GetEntityCoords(Handle, false, false);
@@ -74,6 +76,14 @@ namespace RedM.External
         public override bool Exists()
         {
             return API.DoesEntityExist(Handle);
+        }
+
+        public StateBag State
+        {
+            get
+            {
+                return new StateBag("entity:" + NetworkId);
+            }
         }
 
         [SecuritySafeCritical]

@@ -48,6 +48,8 @@ namespace RedM.External
         public string Name => API.GetPlayerName(Handle);
         public int ServerId => API.GetPlayerServerId(Handle);
 
+        public StateBag State => new StateBag("player:" + ServerId);
+
         /// <summary>
 		/// Gets a value indicating whether this <see cref="Player"/> is alive.
 		/// </summary>

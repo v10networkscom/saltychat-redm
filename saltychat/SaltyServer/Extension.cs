@@ -11,5 +11,10 @@ namespace SaltyServer
         {
             player.TriggerEvent("chatMessage", sender, new int[] { 255, 0, 0 }, message);
         }
+
+        internal static int GetServerId(this Player player)
+        {
+            return Int32.Parse(player.Handle);
+        }
     }
 }

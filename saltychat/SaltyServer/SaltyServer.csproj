@@ -15,8 +15,14 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="CitizenFX.Core.Server" Version="1.0.1552" />
-    <PackageReference Include="Microsoft.CSharp" Version="4.5.0" />
+    <PackageReference Include="CitizenFX.Core.Server" Version="1.0.4355" />
+    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>..\Newtonsoft.Json.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
   <Import Project="..\SaltyShared\SaltyShared.projitems" Label="Shared" />

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using CitizenFX.Core;
 
 namespace SaltyClient
 {
@@ -41,10 +40,35 @@ namespace SaltyClient
         /// IDs of channels which the player can join, while the game instace is running
         /// </summary>
         public ulong[] SwissChannelIds { get; set; }
+
+        /// <summary>
+        /// <see cref="false"/> if TalkState's shouldn't be send for other players to reduce events
+        /// </summary>
+        public bool SendTalkStates { get; set; }
+
+        /// <summary>
+        /// <see cref="true"/> to receive events for radio traffic state changes
+        /// </summary>
+        public bool SendRadioTrafficStates { get; set; }
+
+        /// <summary>
+        /// Maximum range of USR radio mode
+        /// </summary>
+        public float UltraShortRangeDistance { get; set; }
+
+        /// <summary>
+        /// Maximum range of SR radio mode
+        /// </summary>
+        public float ShortRangeDistance { get; set; }
+
+        /// <summary>
+        /// Maximum range of LR radio mode
+        /// </summary>
+        public float LongRangeDistace { get; set; }
         #endregion
 
         #region CTOR
-        public GameInstance(string serverUniqueIdentifier, string name, ulong channelId, string channelPassword, string soundPack, ulong[] swissChannels)
+        public GameInstance(string serverUniqueIdentifier, string name, ulong channelId, string channelPassword, string soundPack, ulong[] swissChannels, bool sendTalkStates, bool sendRadioTrafficStates, float ultraShortRangeDistance, float shortRangeDistance, float longRangeDistace)
         {
             this.ServerUniqueIdentifier = serverUniqueIdentifier;
             this.Name = name;
@@ -52,6 +76,11 @@ namespace SaltyClient
             this.ChannelPassword = channelPassword;
             this.SoundPack = soundPack;
             this.SwissChannelIds = swissChannels;
+            this.SendTalkStates = sendTalkStates;
+            this.SendRadioTrafficStates = sendRadioTrafficStates;
+            this.UltraShortRangeDistance = ultraShortRangeDistance;
+            this.ShortRangeDistance = shortRangeDistance;
+            this.LongRangeDistace = longRangeDistace;
         }
         #endregion
     }
@@ -182,8 +211,20 @@ namespace SaltyClient
     /// </summary>
     public class InstanceState
     {
+        [Obsolete]
         public bool IsConnectedToServer { get; set; }
+        [Obsolete]
         public bool IsReady { get; set; }
+        public GameInstanceState State { get; set; }
+    }
+
+    public enum GameInstanceState
+    {
+        NotInitiated = -1,
+        NotConnected = 0,
+        Connected = 1,
+        Ingame = 2,
+        InSwissChannel = 3,
     }
     #endregion
 
@@ -197,14 +238,6 @@ namespace SaltyClient
         public bool IsMicrophoneEnabled { get; set; }
         public bool IsSoundMuted { get; set; }
         public bool IsSoundEnabled { get; set; }
-    }
-    #endregion
-
-    #region TalkState
-    public class TalkState
-    {
-        public string Name { get; set; }
-        public bool IsTalking { get; set; }
     }
     #endregion
 
@@ -238,11 +271,11 @@ namespace SaltyClient
         #endregion
 
         #region CTOR
-        public SelfState(Vector3 position, float rotation, bool echo = false)
+        public SelfState(CitizenFX.Core.Vector3 position, float rotation, bool isAlive, bool echo = false)
         {
             this.Position = new Vector3(position.X, position.Y, position.Z);
             this.Rotation = rotation;
-            this.IsAlive = true;
+            this.IsAlive = isAlive;
 
             if (echo)
                 this.Echo = new EchoEffect();
@@ -370,19 +403,30 @@ namespace SaltyClient
     }
     #endregion
 
+    #region TalkState
+    public class TalkState
+    {
+        public string Name { get; set; }
+        public bool IsTalking { get; set; }
+    }
+    #endregion
+
     #region Phone
     /// <summary>
     /// Used for <see cref="Command.PhoneCommunicationUpdate"/> and <see cref="Command.StopPhoneCommunication"/>
     /// </summary>
     public class PhoneCommunication
     {
+        #region Properties
         public string Name { get; set; }
         public int? SignalStrength { get; set; }
         public float? Volume { get; set; }
 
         public bool Direct { get; set; }
         public string[] RelayedBy { get; set; }
+        #endregion
 
+        #region CTOR
         public PhoneCommunication(string name)
         {
             this.Name = name;
@@ -423,6 +467,17 @@ namespace SaltyClient
             this.Direct = direct;
             this.RelayedBy = relayedBy;
         }
+        #endregion
+
+        #region Conditional Property Serialization
+        public bool ShouldSerializeSignalStrength() => this.SignalStrength.HasValue;
+
+        public bool ShouldSerializeVolume() => this.Volume.HasValue;
+
+        public bool ShouldSerializeDirect() => this.Direct;
+
+        public bool ShouldSerializeRelayedBy() => this.RelayedBy != null && this.RelayedBy.Length > 0;
+        #endregion
     }
     #endregion
 
@@ -432,11 +487,27 @@ namespace SaltyClient
     /// </summary>
     public class RadioTower
     {
-        public CitizenFX.Core.Vector3[] Towers { get; set; }
+        public Tower[] Towers { get; set; }
 
-        public RadioTower(CitizenFX.Core.Vector3[] towers)
+        public RadioTower(Tower[] towers)
         {
             this.Towers = towers;
+        }
+    }
+
+    public class Tower
+    {
+        public float X { get; set; }
+        public float Y { get; set; }
+        public float Z { get; set; }
+        public float Range { get; set; }
+
+        public Tower(float x, float y, float z, float range = 8000f)
+        {
+            this.X = x;
+            this.Y = y;
+            this.Z = z;
+            this.Range = range;
         }
     }
 
@@ -445,27 +516,31 @@ namespace SaltyClient
     /// </summary>
     public class RadioCommunication
     {
+        #region Properties
         public string Name { get; set; }
         public RadioType SenderRadioType { get; set; }
         public RadioType OwnRadioType { get; set; }
         public bool PlayMicClick { get; set; }
+        public float? Volume { get; set; }
 
         public bool Direct { get; set; }
         public bool Secondary { get; set; }
         public string[] RelayedBy { get; set; }
+        #endregion
 
-        public RadioCommunication(string name, RadioType senderRadioType, RadioType ownRadioType, bool playMicClick, bool isSecondary)
+        #region CTOR
+        public RadioCommunication(string name, RadioType senderRadioType, RadioType ownRadioType, bool playMicClick, bool direct, bool isSecondary)
         {
             this.Name = name;
             this.SenderRadioType = senderRadioType;
             this.OwnRadioType = ownRadioType;
             this.PlayMicClick = playMicClick;
 
-            this.Direct = true;
+            this.Direct = direct;
             this.Secondary = isSecondary;
         }
 
-        public RadioCommunication(string name, RadioType senderRadioType, RadioType ownRadioType, bool playMicClick, bool direct, bool isSecondary, string[] relayedBy)
+        public RadioCommunication(string name, RadioType senderRadioType, RadioType ownRadioType, bool playMicClick, bool direct, bool isSecondary, string[] relayedBy, float volume)
         {
             this.Name = name;
             this.SenderRadioType = senderRadioType;
@@ -475,7 +550,60 @@ namespace SaltyClient
             this.Direct = direct;
             this.Secondary = isSecondary;
             this.RelayedBy = relayedBy;
+
+            if (volume != 1f)
+                this.Volume = volume;
         }
+        #endregion
+
+        #region Conditional Property Serialization
+        public bool ShouldSerializePlayMicClick() => this.PlayMicClick;
+
+        public bool ShouldSerializeVolume() => this.Volume.HasValue;
+
+        public bool ShouldSerializeDirect() => this.Direct;
+
+        public bool ShouldSerializeSecondary() => this.Secondary;
+
+        public bool ShouldSerializeRelayedBy() => this.RelayedBy != null && this.RelayedBy.Length > 0;
+        #endregion
+    }
+
+    /// <summary>
+    /// Sent by the plugin through <see cref="Command.RadioTrafficState"/>
+    /// </summary>
+    public class RadioTrafficState
+    {
+        #region Props/Fields
+        public string Name { get; set; }
+        public bool IsSending { get; set; }
+        public bool IsPrimaryChannel { get; set; }
+        public string ActiveRelay { get; set; }
+        #endregion
+    }
+
+    public class RadioTraffic
+    {
+        #region Props/Fields
+        public string Name { get; set; }
+        public bool IsSending { get; set; }
+        public string RadioChannelName { get; set; }
+        public RadioType SenderRadioType { get; set; }
+        public RadioType ReceiverRadioType { get; set; }
+        public string[] Relays { get; set; }
+        #endregion
+
+        #region CTOR
+        public RadioTraffic(string playerName, bool isSending, string radioChannelName, RadioType senderType, RadioType receiverType, string[] relays)
+        {
+            this.Name = playerName;
+            this.IsSending = isSending;
+            this.RadioChannelName = radioChannelName;
+            this.SenderRadioType = senderType;
+            this.ReceiverRadioType = receiverType;
+            this.Relays = relays;
+        }
+        #endregion
     }
 
     [Flags]
@@ -505,6 +633,38 @@ namespace SaltyClient
         /// Ultra Short range radio communication - appx. 1.8 kilometers
         /// </summary>
         UltraShortRange = 16,
+    }
+    #endregion
+
+    #region Megaphone
+    /// <summary>
+    /// Used for <see cref="Command.MegaphoneCommunicationUpdate"/>
+    /// </summary>
+    public class MegaphoneCommunication
+    {
+        #region Properties
+        public string Name { get; set; }
+        public float Range { get; set; }
+        public float? Volume { get; set; }
+        #endregion
+
+        #region CTOR
+        public MegaphoneCommunication(string name, float range)
+        {
+            this.Name = name;
+            this.Range = range;
+        }
+        public MegaphoneCommunication(string name, float range, float volume)
+        {
+            this.Name = name;
+            this.Range = range;
+            this.Volume = volume;
+        }
+        #endregion
+
+        #region Conditional Property Serialization
+        public bool ShouldSerializeVolume() => this.Volume.HasValue;
+        #endregion
     }
     #endregion
 
@@ -573,6 +733,7 @@ namespace SaltyClient
         RadioCommunicationUpdate = 30,
         StopRadioCommunication = 31,
         RadioTowerUpdate = 32,
+        RadioTrafficState = 33,
 
         // Megaphone
         MegaphoneCommunicationUpdate = 40,
@@ -604,17 +765,41 @@ namespace SaltyClient
     #region VoiceClient
     public class VoiceClient
     {
-        public int ServerId { get; }
-        public RedM.External.Player Player { get; set; }
+        public int ServerId { get; set; }
+        public RedM.External.Player Player => VoiceManager.PlayerList[this.ServerId];
         public string TeamSpeakName { get; set; }
         public float VoiceRange { get; set; }
+        public bool IsAlive { get; set; }
+        public CitizenFX.Core.Vector3 LastPosition { get; set; }
+        public bool DistanceCulled { get; set; }
 
-        public VoiceClient(int serverId, RedM.External.Player player, string teamSpeakName, float voiceRange)
+        public VoiceClient(int serverId, string teamSpeakName, float voiceRange, bool isAlive)
         {
             this.ServerId = serverId;
-            this.Player = player;
             this.TeamSpeakName = teamSpeakName;
             this.VoiceRange = voiceRange;
+            this.IsAlive = isAlive;
+        }
+
+        internal void SendPlayerStateUpdate(VoiceManager voiceManager)
+        {
+            voiceManager.ExecuteCommand(new PluginCommand(Command.PlayerStateUpdate, voiceManager.Configuration.ServerUniqueIdentifier, new PlayerState(this.TeamSpeakName, this.LastPosition, this.VoiceRange, this.IsAlive, this.DistanceCulled)));
+        }
+    }
+    #endregion
+
+    #region Vector3
+    public struct Vector3
+    {
+        public float X;
+        public float Y;
+        public float Z;
+
+        public Vector3(float x, float y, float z)
+        {
+            this.X = x;
+            this.Y = y;
+            this.Z = z;
         }
     }
     #endregion
