@@ -38,7 +38,7 @@ namespace SaltyClient
 
         public Tower[] RadioTowers { get; private set; }
 
-        public string WebSocketAddress { get; private set; } = "lh.saltmine.de:38088";
+        public string WebSocketAddress { get; private set; } = "lh.v10.network:38088";
 
         private float _voiceRange = 0f;
         public float VoiceRange

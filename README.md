@@ -4,15 +4,15 @@ An example implementation of Salty Chat for [RedM](https://redm.gg/) OneSync and
 
 You can report bugs or make sugguestions via issues, or contribute via pull requests - we appreciate any contribution.
 
-Join our [Discord](https://discord.gg/MBCnqSf) and start with [Salty Chat](https://www.saltmine.de/)!
+Join our [Discord](https://gaming.v10networks.com/Discord) and start with [Salty Chat](https://gaming.v10networks.com/SaltyChat)!
 
 # Setup Steps
 Before starting with the setup, make sure you have OneSync enabled and your server artifacts are up to date.
 
 1. Copy the folder `saltychat` into your resources
-2. [Build the solution](https://github.com/saltminede/saltychat-docs/blob/master/installing-vs.md#installing-visual-studio) (`saltychat\SaltyChat-RedM.sln`) with Visual Studio 2019, so the `*.net.dll` files get build
+2. [Build the solution](https://github.com/v10networkscom/saltychat-docs/blob/master/installing-vs.md#installing-visual-studio) (`saltychat\SaltyChat-RedM.sln`) with Visual Studio 2019, so the `*.net.dll` files get build
 3. Add `start saltychat` into your `server.cfg`
-4. Open `config.json` and adjust the [variables](https://github.com/saltminede/saltychat-docs/blob/master/setup.md#config-variables)
+4. Open `config.json` and adjust the [variables](https://github.com/v10networkscom/saltychat-docs/blob/master/setup.md#config-variables)
 ```
   "VoiceEnabled": true,
   "ServerUniqueIdentifier": "NMjxHW5psWaLNmFh0+kjnQik7Qc=",
@@ -24,9 +24,9 @@ Before starting with the setup, make sure you have OneSync enabled and your serv
 ```
 
 **Attantion**: CFX team implemented a NUI blacklist and blocked local (`127.0.0.1` and `localhost`) WebSocket connections.
-If the clientside can't connect to the WebSocket, make sure that you can resolve `lh.saltmine.de`:
+If the clientside can't connect to the WebSocket, make sure that you can resolve `lh.v10.network`:
 1. Open `Windows Command Prompt` by searching `cmd`
-2. Execute `nslookup lh.saltmine.de`
+2. Execute `nslookup lh.v10.network`
 
 If it resolved to `127.0.0.1` then your issue is probably somewhere else, if not then you can use e.g. [Google DNS servers](https://developers.google.com/speed/public-dns/docs/using#addresses).
 
@@ -36,15 +36,15 @@ Variable | Type | Description
 VoiceRanges | `float[]` | Array of possible voice ranges
 EnableVoiceRangeNotification | `bool` | Enables/disables a notification when chaning the voice range
 VoiceRangeNotification | `string` | Text of the notification when changing the voice range, `{voicerange}` will be replaced by the voice range
-RadioType | `int` | Radio type which will be used for radio communication - [see possible values](https://github.com/saltminede/saltychat-docs/blob/master/enums.md#radio-type)
+RadioType | `int` | Radio type which will be used for radio communication - [see possible values](https://github.com/v10networkscom/saltychat-docs/blob/master/enums.md#radio-type)
 EnableRadioHardcoreMode | `bool` | Limits some radio functions like using the radio while swimming/diving and allows only one sender at a time
 UltraShortRangeDistance | `float` | Maximum range of USR radio mode
 ShortRangeDistance | `float` | Maximum range of SR radio mode
 LongRangeDistace | `float` | Maximum range of LR radio mode
 MegaphoneRange | `float` | Range of the megaphone (only available while driving a police car)
 NamePattern | `string` | Naming schema of TeamSpeak clients, `{serverid}` will be replaced by the RedM server ID of the client and `{guid}` will be replaced by a generated GUID
-RequestTalkStates | `bool` | Enables/disables [TalkState's](https://github.com/saltminede/saltychat-docs/blob/master/commands.md#11--talkstate)
-RequestRadioTrafficStates | `bool` | Enables/disables [RadioTrafficState's](https://github.com/saltminede/saltychat-docs/blob/master/commands.md#33--radiotrafficstate)
+RequestTalkStates | `bool` | Enables/disables [TalkState's](https://github.com/v10networkscom/saltychat-docs/blob/master/commands.md#11--talkstate)
+RequestRadioTrafficStates | `bool` | Enables/disables [RadioTrafficState's](https://github.com/v10networkscom/saltychat-docs/blob/master/commands.md#33--radiotrafficstate)
 
 # Keybinds
 Description | Control | Default QWERTY
@@ -58,7 +58,7 @@ Talk on secondary radio | OpenSatchelMenu | B
 ### SaltyChat_PluginStateChanged
 Parameter | Type | Description
 ------------ | ------------- | -------------
-pluginState | `int` | Current state of the plugin (e.g. client is in a swiss channel), see [GameInstanceState](https://github.com/saltminede/saltychat-docs/blob/master/enums.md#game-instance-state) for possible values
+pluginState | `int` | Current state of the plugin (e.g. client is in a swiss channel), see [GameInstanceState](https://github.com/v10networkscom/saltychat-docs/blob/master/enums.md#game-instance-state) for possible values
 
 ### SaltyChat_TalkStateChanged
 Parameter | Type | Description
