@@ -12,18 +12,17 @@ namespace RedM.External
 
 		public IEnumerator<Player> GetEnumerator()
 		{
-			for (var i = 0; i < MaxPlayers; i++)
+			var list = (IList<object>)(object)API.GetActivePlayers();
+
+			foreach (var p in list)
 			{
-				if (API.NetworkIsPlayerActive(i))
-				{
-					yield return new Player(i);
-				}
+				yield return new Player(Convert.ToInt32(p));
 			}
 		}
 
 		IEnumerator IEnumerable.GetEnumerator()
 		{
-			return GetEnumerator();
+			return this.GetEnumerator();
 		}
 
 		public Player this[int netId] => this.FirstOrDefault(player => player.ServerId == netId);
