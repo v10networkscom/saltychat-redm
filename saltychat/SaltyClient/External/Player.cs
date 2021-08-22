@@ -20,35 +20,41 @@ namespace RedM.External
     public sealed class Player : INativeValue, IEquatable<Player>
     {
         public int Handle { get; private set; }
+        public override ulong NativeValue
+        {
+            get { return (ulong)this.Handle; }
+            set { this.Handle = unchecked((int)value); }
+        }
 
         private Ped _ped;
 
         public Player(int handle)
         {
-            Handle = handle;
+            this.Handle = handle;
         }
 
         public bool Exists()
         {
-            return API.NetworkIsPlayerActive(Handle);
+            return API.NetworkIsPlayerActive(this.Handle);
         }
 
         public Ped Character
         {
             get {
-                if (!ReferenceEquals(_ped, null) && _ped.Handle == Handle)
+                if (!ReferenceEquals(_ped, null) && _ped.Handle == this.Handle)
                 {
-                    return _ped;
+                    return this._ped;
                 }
-                _ped = new Ped(API.GetPlayerPed(Handle));
-                return _ped;
+
+                this._ped = new Ped(API.GetPlayerPed(this.Handle));
+                return this._ped;
             }
         }
 
-        public string Name => API.GetPlayerName(Handle);
-        public int ServerId => API.GetPlayerServerId(Handle);
+        public string Name => API.GetPlayerName(this.Handle);
+        public int ServerId => API.GetPlayerServerId(this.Handle);
 
-        public StateBag State => new StateBag("player:" + ServerId);
+        public StateBag State => new StateBag("player:" + this.ServerId);
 
         /// <summary>
 		/// Gets a value indicating whether this <see cref="Player"/> is alive.
@@ -60,7 +66,7 @@ namespace RedM.External
         {
             get
             {
-                return !IsDead;
+                return !this.IsDead;
             }
         }
 
@@ -74,29 +80,33 @@ namespace RedM.External
         {
             get
             {
-                return API.IsPlayerDead(Handle);
+                return API.IsPlayerDead(this.Handle);
             }
         }
 
-        public bool Equals(Player other)
+        public bool Equals(Player player)
         {
-            return other != null && ReferenceEquals(this, other) && other.Handle == Handle;
+            return !ReferenceEquals(player, null) && this.Handle == player.Handle;
         }
 
         public override bool Equals(object obj)
         {
-            return obj is Player other && Equals(other);
+            return !ReferenceEquals(obj, null) && obj.GetType() == this.GetType() && this.Equals((Entity)obj);
         }
 
         public override int GetHashCode()
         {
-            return Handle.GetHashCode();
+            return this.Handle.GetHashCode();
         }
 
-        public override ulong NativeValue
+        public static bool operator ==(Player left, Player right)
         {
-            get => (ulong)Handle;
-            set => Handle = unchecked((int)value);
+            return ReferenceEquals(left, null) ? ReferenceEquals(right, null) : left.Equals(right);
+        }
+
+        public static bool operator !=(Player left, Player right)
+        {
+            return !(left == right);
         }
     }
 }
