@@ -876,9 +876,7 @@ namespace SaltyClient
 
         private async Task OnControlTick()
         {
-            Ped playerPed = Game.PlayerPed;
-
-            if (this.IsEnabled && playerPed != null)
+            if (this.IsEnabled)
             {
                 Game.DisableControlThisFrame(0, Control.PushToTalk);
                 Game.DisableControlThisFrame(0, (Control)this.Configuration.ToggleRange);
@@ -912,7 +910,8 @@ namespace SaltyClient
 
         private async Task OnStateUpdateTick()
         {
-            Ped playerPed = Game.PlayerPed;
+            Player localPlayer = Game.Player;
+            Ped playerPed = localPlayer.Character;
 
             if (this.IsConnected && this.PlguinState == GameInstanceState.Ingame)
             {
@@ -922,27 +921,24 @@ namespace SaltyClient
                 List<PlayerState> playerStates = new List<PlayerState>();
                 List<int> updatedPlayers = new List<int>();
 
-                foreach (Ped ped in World.GetAllPeds().Where(p => p.IsPlayer))
+                foreach (Player nPlayer in VoiceManager.PlayerList)
                 {
-                    if (ped == playerPed)
+                    if (nPlayer == localPlayer || !this.GetOrCreateVoiceClient(nPlayer, out VoiceClient voiceClient))
                         continue;
 
-                    Player nPlayer = new Player(API.NetworkGetPlayerIndexFromPed(ped.Handle));
-
-                    if (nPlayer == null || !this.GetOrCreateVoiceClient(nPlayer, out VoiceClient voiceClient))
-                        continue;
+                    Ped nPed = nPlayer.Character;
 
                     if (voiceClient.DistanceCulled)
                         voiceClient.DistanceCulled = false;
 
-                    voiceClient.LastPosition = ped.Position;
+                    voiceClient.LastPosition = nPed.Position;
                     int? muffleIntensity = null;
 
                     if (voiceClient.IsAlive)
                     {
-                        int nPlayerRoomId = API.GetRoomKeyFromEntity(ped.Handle);
+                        int nPlayerRoomId = API.GetRoomKeyFromEntity(nPed.Handle);
 
-                        if (nPlayerRoomId != playerRoomId && !API.HasEntityClearLosToEntity(playerPed.Handle, ped.Handle, 17))
+                        if (nPlayerRoomId != playerRoomId && !API.HasEntityClearLosToEntity(playerPed.Handle, nPed.Handle, 17))
                         {
                             muffleIntensity = 10;
                         }
