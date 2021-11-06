@@ -13,6 +13,7 @@ server_scripts {
 }
 
 files {
+    'SaltyClient/bin/Debug/SaltyClient.net.pdb',
     'NUI/SaltyWebSocket.html',
     'Newtonsoft.Json.dll',
     'config.json',
