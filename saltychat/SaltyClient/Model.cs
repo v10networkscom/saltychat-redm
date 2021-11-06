@@ -266,15 +266,17 @@ namespace SaltyClient
         #region Properties
         public Vector3 Position { get; set; }
         public float Rotation { get; set; }
+        public float VoiceRange { get; set; }
         public bool IsAlive { get; set; }
         public EchoEffect Echo { get; set; }
         #endregion
 
         #region CTOR
-        public SelfState(CitizenFX.Core.Vector3 position, float rotation, bool isAlive, bool echo = false)
+        public SelfState(CitizenFX.Core.Vector3 position, float rotation, float voiceRange, bool isAlive, bool echo = false)
         {
             this.Position = new Vector3(position.X, position.Y, position.Z);
             this.Rotation = rotation;
+            this.VoiceRange = voiceRange;
             this.IsAlive = isAlive;
 
             if (echo)
@@ -570,6 +572,30 @@ namespace SaltyClient
     }
 
     /// <summary>
+    /// User for <see cref="Command.AddRadioChannelMember"/> and <see cref="Command.RemoveRadioChannelMember"/>
+    /// </summary>
+    public class RadioChannelMember
+    {
+        public string PlayerName { get; set; }
+        public bool IsPrimaryChannel { get; set; }
+    }
+
+    /// <summary>
+    /// Used for <see cref="Command.UpdateRadioChannelMembers"/>
+    /// </summary>
+    public class RadioChannelMemberUpdate
+    {
+        public string[] PlayerNames { get; set; }
+        public bool IsPrimaryChannel { get; set; }
+
+        public RadioChannelMemberUpdate(string[] members, bool isPrimary)
+        {
+            this.PlayerNames = members;
+            this.IsPrimaryChannel = isPrimary;
+        }
+    }
+
+    /// <summary>
     /// Sent by the plugin through <see cref="Command.RadioTrafficState"/>
     /// </summary>
     public class RadioTrafficState
@@ -735,6 +761,10 @@ namespace SaltyClient
         RadioTowerUpdate = 32,
         RadioTrafficState = 33,
 
+        AddRadioChannelMember = 37,
+        UpdateRadioChannelMembers = 38,
+        RemoveRadioChannelMember = 39,
+
         // Megaphone
         MegaphoneCommunicationUpdate = 40,
         StopMegaphoneCommunication = 41,
@@ -744,12 +774,16 @@ namespace SaltyClient
     #region Error
     public enum Error
     {
-        OK,
-        InvalidJson,
-        NotConnectedToServer,
-        AlreadyInGame,
-        ChannelNotAvailable,
-        NameNotAvailable
+        OK = 0,
+        InvalidJson = 1,
+        NotConnectedToServer = 2,
+        AlreadyInGame = 3,
+        ChannelNotAvailable = 4,
+        NameNotAvailable = 5,
+        InvalidValue = 6,
+
+        ServerBlacklisted = 100,
+        ServerUnderlicensed = 101
     }
     #endregion
 

@@ -14,6 +14,8 @@ namespace SaltyServer
 
         internal RadioChannelMember[] Members => this._members.ToArray();
         private List<RadioChannelMember> _members = new List<RadioChannelMember>();
+
+        private object _memberLock = new object();
         #endregion
 
         #region CTOR
@@ -34,13 +36,15 @@ namespace SaltyServer
 
         internal void AddMember(VoiceClient voiceClient, bool isPrimary)
         {
-            lock (this._members)
+            lock (this._memberLock)
             {
                 if (!this._members.Any(m => m.VoiceClient == voiceClient))
                 {
                     this._members.Add(new RadioChannelMember(this, voiceClient, isPrimary));
 
                     voiceClient.TriggerEvent(Event.SaltyChat_SetRadioChannel, this.Name, isPrimary);
+
+                    this.BroadcastEvent(Event.SaltyChat_RadioChannelMemberUpdated, this.Name, this.Members.Select(m => m.VoiceClient.TeamSpeakName));
 
                     foreach (RadioChannelMember member in this._members.Where(m => m.IsSending))
                     {
@@ -52,7 +56,7 @@ namespace SaltyServer
 
         internal void RemoveMember(VoiceClient voiceClient)
         {
-            lock (this._members)
+            lock (this._memberLock)
             {
                 RadioChannelMember member = this._members.FirstOrDefault(m => m.VoiceClient == voiceClient);
 
@@ -86,6 +90,8 @@ namespace SaltyServer
                     }
 
                     voiceClient.TriggerEvent(Event.SaltyChat_SetRadioChannel, null, member.IsPrimary);
+
+                    this.BroadcastEvent(Event.SaltyChat_RadioChannelMemberUpdated, this.Name, this.Members.Select(m => m.VoiceClient.TeamSpeakName));
                 }
             }
         }
@@ -168,6 +174,14 @@ namespace SaltyServer
             radioChannelMember = this.Members.FirstOrDefault(m => m.VoiceClient == voiceClient);
 
             return radioChannelMember != null;
+        }
+
+        private void BroadcastEvent(string eventName, params object[] eventParams)
+        {
+            foreach (RadioChannelMember member in this.Members)
+            {
+                member.VoiceClient.TriggerEvent(eventName, eventParams);
+            }
         }
         #endregion
     }

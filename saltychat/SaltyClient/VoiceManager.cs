@@ -346,19 +346,42 @@ namespace SaltyClient
                 this.PrimaryRadioChannel = radioChannel;
 
                 if (String.IsNullOrEmpty(radioChannel))
+                {
                     this.PlaySound("leaveRadioChannel", false, "radio");
+
+                    this.ExecuteCommand(new PluginCommand(Command.UpdateRadioChannelMembers, this.Configuration.ServerUniqueIdentifier, new RadioChannelMemberUpdate(new string[0], true)));
+                }
                 else
+                {
                     this.PlaySound("enterRadioChannel", false, "radio");
+                }
             }
             else
             {
                 this.SecondaryRadioChannel = radioChannel;
 
                 if (String.IsNullOrEmpty(radioChannel))
+                {
                     this.PlaySound("leaveRadioChannel", false, "radio");
+
+                    this.ExecuteCommand(new PluginCommand(Command.UpdateRadioChannelMembers, this.Configuration.ServerUniqueIdentifier, new RadioChannelMemberUpdate(new string[0], false)));
+                }
                 else
+                {
                     this.PlaySound("enterRadioChannel", false, "radio");
+                }
             }
+        }
+
+        [EventHandler(Event.SaltyChat_RadioChannelMemberUpdated)]
+        private void OnChannelMembersUpdated(string channelName, List<dynamic> channelMembers)
+        {
+            string[] memberArray = channelMembers.Select(m => (string)m).ToArray();
+
+            if (this.PrimaryRadioChannel == channelName)
+                this.ExecuteCommand(new PluginCommand(Command.UpdateRadioChannelMembers, this.Configuration.ServerUniqueIdentifier, new RadioChannelMemberUpdate(memberArray, true)));
+            else if (this.SecondaryRadioChannel == channelName)
+                this.ExecuteCommand(new PluginCommand(Command.UpdateRadioChannelMembers, this.Configuration.ServerUniqueIdentifier, new RadioChannelMemberUpdate(memberArray, false)));
         }
 
         [EventHandler(Event.SaltyChat_IsSending)]
@@ -498,7 +521,7 @@ namespace SaltyClient
         }
         #endregion
 
-        #region Remote Events(Megaphone)
+        #region Remote Events (Megaphone)
         [EventHandler(Event.SaltyChat_IsUsingMegaphone)]
         private void OnIsUsingMegaphone(string handle, string teamSpeakName, float range, bool isSending, dynamic position)
         {
@@ -982,6 +1005,7 @@ namespace SaltyClient
                             new SelfState(
                                 playerPosition,
                                 API.GetGameplayCamRot(0).Z,
+                                this.VoiceRange,
                                 this.IsAlive
                             )
                         )
