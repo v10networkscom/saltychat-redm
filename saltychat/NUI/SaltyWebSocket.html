@@ -109,11 +109,11 @@
         {
             if (typeof data === "undefined")
             {
-                $.post(`http://saltychat/${event}`);
+                $.post(`http://${GetParentResourceName()}/${event}`);
             }
             else
             {
-                $.post(`http://saltychat/${event}`, data);
+                $.post(`http://${GetParentResourceName()}/${event}`, data);
             }
         }
 
