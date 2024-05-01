@@ -276,7 +276,15 @@ namespace SaltyServer
 
             lock (this._voiceClients)
             {
-                voiceClient = new VoiceClient(player, this.GetTeamSpeakName(player), this.Configuration.VoiceRanges[1], true);
+                string playerName = this.GetTeamSpeakName(player);
+
+                if (String.IsNullOrWhiteSpace(playerName))
+                {
+                    Debug.WriteLine($"Failed to generate a unique name for player {player.Handle}. Ensure that you use a unique name pattern in your config.json.");
+                    return;
+                }
+
+                voiceClient = new VoiceClient(player, playerName, this.Configuration.VoiceRanges[1], true);
 
                 if (this._voiceClients.ContainsKey(player))
                     this._voiceClients[player] = voiceClient;
@@ -648,10 +656,15 @@ namespace SaltyServer
         public string GetTeamSpeakName(Player player)
         {
             string name = this.Configuration.NamePattern;
+            byte counter = 0;
 
             do
             {
-                name = Regex.Replace(name, @"(\{serverid\})", player.Handle);
+                if (++counter > 5)
+                    return null;
+
+                name = Regex.Replace(name, @"(\{serverid\})", player.Handle.ToString());
+                name = Regex.Replace(name, @"(\{playername\})", player.Name ?? String.Empty);
                 name = Regex.Replace(name, @"(\{guid\})", Guid.NewGuid().ToString().Replace("-", ""));
 
                 if (name.Length > 30)

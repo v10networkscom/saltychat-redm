@@ -41,7 +41,7 @@ UltraShortRangeDistance | `float` | Maximum range of USR radio mode
 ShortRangeDistance | `float` | Maximum range of SR radio mode
 LongRangeDistace | `float` | Maximum range of LR radio mode
 MegaphoneRange | `float` | Range of the megaphone (only available while driving a police car)
-NamePattern | `string` | Naming schema of TeamSpeak clients, `{serverid}` will be replaced by the RedM server ID of the client and `{guid}` will be replaced by a generated GUID
+NamePattern | `string` | Naming schema of TeamSpeak clients, `{serverid}` will be replaced by the RedM server ID of the client, `{playername}` by the name of the client and `{guid}` by a generated GUID
 RequestTalkStates | `bool` | Enables/disables [TalkState's](https://github.com/v10networkscom/saltychat-docs/blob/master/commands.md#11--talkstate)
 RequestRadioTrafficStates | `bool` | Enables/disables [RadioTrafficState's](https://github.com/v10networkscom/saltychat-docs/blob/master/commands.md#33--radiotrafficstate)
 
