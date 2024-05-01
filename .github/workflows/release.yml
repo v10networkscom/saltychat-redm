@@ -13,19 +13,16 @@ jobs:
       SolutionPath: saltychat\SaltyChat-RedM.sln
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       
       - name: Setup NuGet.exe
-        uses: NuGet/setup-nuget@v1.0.5
+        uses: NuGet/setup-nuget@v2
 
       - name: Restore NuGet packages
         run: nuget restore $env:SolutionPath
       
       - name: Setup MSBuild.exe
-        uses: microsoft/setup-msbuild@v1.0.2
-
-      - name: Build solution
-        run: msbuild $env:SolutionPath /property:Configuration=Release
+        uses: microsoft/setup-msbuild@v2
 
       - name: Prepare release
         run: .\Build-Release.ps1
@@ -33,14 +30,15 @@ jobs:
 
       - name: Bump version and push tag
         id: tag_version
-        uses: mathieudutour/github-tag-action@v5.6
+        uses: mathieudutour/github-tag-action@v6.2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create release
-        uses: ncipollo/release-action@v1
+        uses: ncipollo/release-action@v1.14.0
         with:
           tag: ${{ steps.tag_version.outputs.new_tag }}
           name: Release ${{ steps.tag_version.outputs.new_tag }}
+          body: ${{ steps.tag_version.outputs.changelog }}
           artifacts: "release/*.zip"
           token: ${{ secrets.GITHUB_TOKEN }}
